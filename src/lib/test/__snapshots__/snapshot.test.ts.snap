@@ -1,0 +1,551 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`AST snapshots > BasicPDF AST 1`] = `
+[
+  {
+    "children": [
+      {
+        "children": [
+          {
+            "text": "Hello, svelte-pdf!",
+            "type": "text",
+          },
+          {
+            "text": "Pipeline working.",
+            "type": "text",
+          },
+        ],
+        "type": "view",
+      },
+    ],
+    "type": "page",
+  },
+]
+`;
+
+exports[`AST snapshots > LinkTemplate AST 1`] = `
+[
+  {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [
+              {
+                "text": "Click here",
+                "type": "text",
+              },
+            ],
+            "type": "link",
+          },
+        ],
+        "type": "view",
+      },
+    ],
+    "type": "page",
+  },
+]
+`;
+
+exports[`AST snapshots > PageNumberTemplate AST has render prop on footer text 1`] = `
+[
+  {
+    "children": [
+      {
+        "children": [
+          {
+            "text": "Row 1: body text that fills the page and causes overflow",
+            "type": "text",
+          },
+          {
+            "text": "Row 2: body text that fills the page and causes overflow",
+            "type": "text",
+          },
+          {
+            "text": "Row 3: body text that fills the page and causes overflow",
+            "type": "text",
+          },
+          {
+            "text": "Row 4: body text that fills the page and causes overflow",
+            "type": "text",
+          },
+          {
+            "text": "Row 5: body text that fills the page and causes overflow",
+            "type": "text",
+          },
+          {
+            "text": "Row 6: body text that fills the page and causes overflow",
+            "type": "text",
+          },
+          {
+            "text": "Row 7: body text that fills the page and causes overflow",
+            "type": "text",
+          },
+          {
+            "text": "Row 8: body text that fills the page and causes overflow",
+            "type": "text",
+          },
+          {
+            "text": "Row 9: body text that fills the page and causes overflow",
+            "type": "text",
+          },
+          {
+            "text": "Row 10: body text that fills the page and causes overflow",
+            "type": "text",
+          },
+          {
+            "text": "Row 11: body text that fills the page and causes overflow",
+            "type": "text",
+          },
+          {
+            "text": "Row 12: body text that fills the page and causes overflow",
+            "type": "text",
+          },
+          {
+            "text": "Row 13: body text that fills the page and causes overflow",
+            "type": "text",
+          },
+          {
+            "text": "Row 14: body text that fills the page and causes overflow",
+            "type": "text",
+          },
+          {
+            "text": "Row 15: body text that fills the page and causes overflow",
+            "type": "text",
+          },
+          {
+            "text": "Row 16: body text that fills the page and causes overflow",
+            "type": "text",
+          },
+          {
+            "text": "Row 17: body text that fills the page and causes overflow",
+            "type": "text",
+          },
+          {
+            "text": "Row 18: body text that fills the page and causes overflow",
+            "type": "text",
+          },
+          {
+            "text": "Row 19: body text that fills the page and causes overflow",
+            "type": "text",
+          },
+          {
+            "text": "Row 20: body text that fills the page and causes overflow",
+            "type": "text",
+          },
+          {
+            "text": "Row 21: body text that fills the page and causes overflow",
+            "type": "text",
+          },
+          {
+            "text": "Row 22: body text that fills the page and causes overflow",
+            "type": "text",
+          },
+          {
+            "text": "Row 23: body text that fills the page and causes overflow",
+            "type": "text",
+          },
+          {
+            "text": "Row 24: body text that fills the page and causes overflow",
+            "type": "text",
+          },
+          {
+            "text": "Row 25: body text that fills the page and causes overflow",
+            "type": "text",
+          },
+          {
+            "text": "Row 26: body text that fills the page and causes overflow",
+            "type": "text",
+          },
+          {
+            "text": "Row 27: body text that fills the page and causes overflow",
+            "type": "text",
+          },
+          {
+            "text": "Row 28: body text that fills the page and causes overflow",
+            "type": "text",
+          },
+          {
+            "text": "Row 29: body text that fills the page and causes overflow",
+            "type": "text",
+          },
+          {
+            "text": "Row 30: body text that fills the page and causes overflow",
+            "type": "text",
+          },
+          {
+            "text": "Row 31: body text that fills the page and causes overflow",
+            "type": "text",
+          },
+          {
+            "text": "Row 32: body text that fills the page and causes overflow",
+            "type": "text",
+          },
+          {
+            "text": "Row 33: body text that fills the page and causes overflow",
+            "type": "text",
+          },
+          {
+            "text": "Row 34: body text that fills the page and causes overflow",
+            "type": "text",
+          },
+          {
+            "text": "Row 35: body text that fills the page and causes overflow",
+            "type": "text",
+          },
+          {
+            "text": "Row 36: body text that fills the page and causes overflow",
+            "type": "text",
+          },
+          {
+            "text": "Row 37: body text that fills the page and causes overflow",
+            "type": "text",
+          },
+          {
+            "text": "Row 38: body text that fills the page and causes overflow",
+            "type": "text",
+          },
+          {
+            "text": "Row 39: body text that fills the page and causes overflow",
+            "type": "text",
+          },
+          {
+            "text": "Row 40: body text that fills the page and causes overflow",
+            "type": "text",
+          },
+          {
+            "text": "Row 41: body text that fills the page and causes overflow",
+            "type": "text",
+          },
+          {
+            "text": "Row 42: body text that fills the page and causes overflow",
+            "type": "text",
+          },
+          {
+            "text": "Row 43: body text that fills the page and causes overflow",
+            "type": "text",
+          },
+          {
+            "text": "Row 44: body text that fills the page and causes overflow",
+            "type": "text",
+          },
+          {
+            "text": "Row 45: body text that fills the page and causes overflow",
+            "type": "text",
+          },
+          {
+            "text": "Row 46: body text that fills the page and causes overflow",
+            "type": "text",
+          },
+          {
+            "text": "Row 47: body text that fills the page and causes overflow",
+            "type": "text",
+          },
+          {
+            "text": "Row 48: body text that fills the page and causes overflow",
+            "type": "text",
+          },
+          {
+            "text": "Row 49: body text that fills the page and causes overflow",
+            "type": "text",
+          },
+          {
+            "text": "Row 50: body text that fills the page and causes overflow",
+            "type": "text",
+          },
+          {
+            "text": "Row 51: body text that fills the page and causes overflow",
+            "type": "text",
+          },
+          {
+            "text": "Row 52: body text that fills the page and causes overflow",
+            "type": "text",
+          },
+          {
+            "text": "Row 53: body text that fills the page and causes overflow",
+            "type": "text",
+          },
+          {
+            "text": "Row 54: body text that fills the page and causes overflow",
+            "type": "text",
+          },
+          {
+            "text": "Row 55: body text that fills the page and causes overflow",
+            "type": "text",
+          },
+          {
+            "text": "Row 56: body text that fills the page and causes overflow",
+            "type": "text",
+          },
+          {
+            "text": "Row 57: body text that fills the page and causes overflow",
+            "type": "text",
+          },
+          {
+            "text": "Row 58: body text that fills the page and causes overflow",
+            "type": "text",
+          },
+          {
+            "text": "Row 59: body text that fills the page and causes overflow",
+            "type": "text",
+          },
+          {
+            "text": "Row 60: body text that fills the page and causes overflow",
+            "type": "text",
+          },
+          {
+            "text": "Row 61: body text that fills the page and causes overflow",
+            "type": "text",
+          },
+          {
+            "text": "Row 62: body text that fills the page and causes overflow",
+            "type": "text",
+          },
+          {
+            "text": "Row 63: body text that fills the page and causes overflow",
+            "type": "text",
+          },
+          {
+            "text": "Row 64: body text that fills the page and causes overflow",
+            "type": "text",
+          },
+          {
+            "text": "Row 65: body text that fills the page and causes overflow",
+            "type": "text",
+          },
+          {
+            "text": "Row 66: body text that fills the page and causes overflow",
+            "type": "text",
+          },
+          {
+            "text": "Row 67: body text that fills the page and causes overflow",
+            "type": "text",
+          },
+          {
+            "text": "Row 68: body text that fills the page and causes overflow",
+            "type": "text",
+          },
+          {
+            "text": "Row 69: body text that fills the page and causes overflow",
+            "type": "text",
+          },
+          {
+            "text": "Row 70: body text that fills the page and causes overflow",
+            "type": "text",
+          },
+          {
+            "text": "Row 71: body text that fills the page and causes overflow",
+            "type": "text",
+          },
+          {
+            "text": "Row 72: body text that fills the page and causes overflow",
+            "type": "text",
+          },
+          {
+            "text": "Row 73: body text that fills the page and causes overflow",
+            "type": "text",
+          },
+          {
+            "text": "Row 74: body text that fills the page and causes overflow",
+            "type": "text",
+          },
+          {
+            "text": "Row 75: body text that fills the page and causes overflow",
+            "type": "text",
+          },
+          {
+            "text": "Row 76: body text that fills the page and causes overflow",
+            "type": "text",
+          },
+          {
+            "text": "Row 77: body text that fills the page and causes overflow",
+            "type": "text",
+          },
+          {
+            "text": "Row 78: body text that fills the page and causes overflow",
+            "type": "text",
+          },
+          {
+            "text": "Row 79: body text that fills the page and causes overflow",
+            "type": "text",
+          },
+          {
+            "text": "Row 80: body text that fills the page and causes overflow",
+            "type": "text",
+          },
+        ],
+        "type": "view",
+      },
+      {
+        "children": [
+          {
+            "render": "<fn>",
+            "type": "text",
+          },
+        ],
+        "type": "view",
+      },
+    ],
+    "type": "page",
+  },
+]
+`;
+
+exports[`AST snapshots > TableTemplate AST 1`] = `
+[
+  {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [
+              {
+                "children": [
+                  {
+                    "children": [
+                      {
+                        "text": "Name",
+                        "type": "text",
+                      },
+                    ],
+                    "type": "view",
+                  },
+                  {
+                    "children": [
+                      {
+                        "text": "Qty",
+                        "type": "text",
+                      },
+                    ],
+                    "type": "view",
+                  },
+                  {
+                    "children": [
+                      {
+                        "text": "Price",
+                        "type": "text",
+                      },
+                    ],
+                    "type": "view",
+                  },
+                ],
+                "type": "view",
+              },
+              {
+                "children": [
+                  {
+                    "children": [
+                      {
+                        "text": "Widget",
+                        "type": "text",
+                      },
+                    ],
+                    "type": "view",
+                  },
+                  {
+                    "children": [
+                      {
+                        "text": "3",
+                        "type": "text",
+                      },
+                    ],
+                    "type": "view",
+                  },
+                  {
+                    "children": [
+                      {
+                        "text": "$9.00",
+                        "type": "text",
+                      },
+                    ],
+                    "type": "view",
+                  },
+                ],
+                "type": "view",
+              },
+              {
+                "children": [
+                  {
+                    "children": [
+                      {
+                        "text": "Gadget",
+                        "type": "text",
+                      },
+                    ],
+                    "type": "view",
+                  },
+                  {
+                    "children": [
+                      {
+                        "text": "1",
+                        "type": "text",
+                      },
+                    ],
+                    "type": "view",
+                  },
+                  {
+                    "children": [
+                      {
+                        "text": "$15.00",
+                        "type": "text",
+                      },
+                    ],
+                    "type": "view",
+                  },
+                ],
+                "type": "view",
+              },
+            ],
+            "type": "view",
+          },
+        ],
+        "type": "view",
+      },
+    ],
+    "type": "page",
+  },
+]
+`;
+
+exports[`End-to-end PDF structure snapshots > BasicPDF PDF structure 1`] = `
+{
+  "pages": 1,
+  "valid": true,
+}
+`;
+
+exports[`End-to-end PDF structure snapshots > OverflowTemplate(80) PDF structure 1`] = `
+{
+  "pages": 3,
+  "valid": true,
+}
+`;
+
+exports[`End-to-end PDF structure snapshots > PageNumberTemplate PDF structure 1`] = `
+{
+  "pages": 2,
+  "valid": true,
+}
+`;
+
+exports[`End-to-end PDF structure snapshots > SvgTemplate PDF structure 1`] = `
+{
+  "pages": 1,
+  "valid": true,
+}
+`;
+
+exports[`End-to-end PDF structure snapshots > TableTemplate PDF structure 1`] = `
+{
+  "pages": 1,
+  "valid": true,
+}
+`;
+
+exports[`Pagination snapshots > BasicPDF produces 1 page 1`] = `1`;
+
+exports[`Pagination snapshots > OverflowTemplate(10) produces 1 page 1`] = `1`;
+
+exports[`Pagination snapshots > OverflowTemplate(80) produces multiple pages 1`] = `3`;
+
+exports[`Pagination snapshots > PageNumberTemplate produces multiple pages 1`] = `2`;

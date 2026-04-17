@@ -1,0 +1,217 @@
+{
+	"name": "svelte-pdf",
+	"version": "0.0.1",
+	"type": "module",
+	"scripts": {
+		"dev": "vite dev",
+		"build": "vite build",
+		"package": "svelte-package && rm -rf dist/test && publint",
+		"check": "svelte-check --tsconfig ./tsconfig.json",
+		"test": "vitest run",
+		"test:watch": "vitest"
+	},
+	"devDependencies": {
+		"@sveltejs/package": "^2.0.0",
+		"@sveltejs/vite-plugin-svelte": "^5.0.0",
+		"@types/node": "^22.0.0",
+		"@types/pdfkit": "^0.13.0",
+		"publint": "^0.3.0",
+		"svelte": "^5.0.0",
+		"svelte-check": "^4.0.0",
+		"typescript": "^5.0.0",
+		"vite": "^7.3.1",
+		"vitest": "^3.0.0"
+	},
+	"peerDependencies": {
+		"svelte": "^5.0.0"
+	},
+	"dependencies": {
+		"pdfkit": "^0.15.0",
+		"yoga-layout": "^3.2.1"
+	},
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"svelte": "./dist/index.js",
+			"default": "./dist/index.js"
+		},
+		"./pdf-svelte": {
+			"types": "./dist/pdf-svelte.d.ts"
+		},
+
+		"./compiler/vite-plugin": {
+			"types": "./dist/compiler/vite-plugin.d.ts",
+			"default": "./dist/compiler/vite-plugin.js"
+		},
+		"./runtime/document.js": {
+			"types": "./dist/runtime/document.d.ts",
+			"default": "./dist/runtime/document.js"
+		},
+		"./runtime/resources.js": {
+			"types": "./dist/runtime/resources.d.ts",
+			"default": "./dist/runtime/resources.js"
+		},
+		"./runtime/render.js": {
+			"types": "./dist/runtime/render.d.ts",
+			"default": "./dist/runtime/render.js"
+		},
+		"./runtime/node.js": {
+			"types": "./dist/runtime/node.d.ts",
+			"default": "./dist/runtime/node.js"
+		},
+		"./runtime/font-registry.js": {
+			"types": "./dist/runtime/font-registry.d.ts",
+			"default": "./dist/runtime/font-registry.js"
+		},
+		"./layout/layout.js": {
+			"types": "./dist/layout/layout.d.ts",
+			"default": "./dist/layout/layout.js"
+		},
+		"./pagination/paginate.js": {
+			"types": "./dist/pagination/paginate.d.ts",
+			"default": "./dist/pagination/paginate.js"
+		},
+		"./renderer/render.js": {
+			"types": "./dist/renderer/render.d.ts",
+			"default": "./dist/renderer/render.js"
+		},
+		"./components/Document/Document.svelte": {
+			"types": "./dist/components/Document/Document.svelte.d.ts",
+			"svelte": "./dist/components/Document/Document.svelte",
+			"default": "./dist/components/Document/Document.svelte"
+		},
+		"./components/Page/Page.svelte": {
+			"types": "./dist/components/Page/Page.svelte.d.ts",
+			"svelte": "./dist/components/Page/Page.svelte",
+			"default": "./dist/components/Page/Page.svelte"
+		},
+		"./components/View/View.svelte": {
+			"types": "./dist/components/View/View.svelte.d.ts",
+			"svelte": "./dist/components/View/View.svelte",
+			"default": "./dist/components/View/View.svelte"
+		},
+		"./components/Text/Text.svelte": {
+			"types": "./dist/components/Text/Text.svelte.d.ts",
+			"svelte": "./dist/components/Text/Text.svelte",
+			"default": "./dist/components/Text/Text.svelte"
+		},
+		"./components/Image/Image.svelte": {
+			"types": "./dist/components/Image/Image.svelte.d.ts",
+			"svelte": "./dist/components/Image/Image.svelte",
+			"default": "./dist/components/Image/Image.svelte"
+		},
+		"./components/Font/Font.svelte": {
+			"types": "./dist/components/Font/Font.svelte.d.ts",
+			"svelte": "./dist/components/Font/Font.svelte",
+			"default": "./dist/components/Font/Font.svelte"
+		},
+		"./components/Link/Link.svelte": {
+			"types": "./dist/components/Link/Link.svelte.d.ts",
+			"svelte": "./dist/components/Link/Link.svelte",
+			"default": "./dist/components/Link/Link.svelte"
+		},
+		"./components/Canvas/Canvas.svelte": {
+			"types": "./dist/components/Canvas/Canvas.svelte.d.ts",
+			"svelte": "./dist/components/Canvas/Canvas.svelte",
+			"default": "./dist/components/Canvas/Canvas.svelte"
+		},
+		"./components/Svg/Svg.svelte": {
+			"types": "./dist/components/Svg/Svg.svelte.d.ts",
+			"svelte": "./dist/components/Svg/Svg.svelte",
+			"default": "./dist/components/Svg/Svg.svelte"
+		},
+		"./components/Svg/Path.svelte": {
+			"types": "./dist/components/Svg/Path.svelte.d.ts",
+			"svelte": "./dist/components/Svg/Path.svelte",
+			"default": "./dist/components/Svg/Path.svelte"
+		},
+		"./components/Svg/Circle.svelte": {
+			"types": "./dist/components/Svg/Circle.svelte.d.ts",
+			"svelte": "./dist/components/Svg/Circle.svelte",
+			"default": "./dist/components/Svg/Circle.svelte"
+		},
+		"./components/Svg/Rect.svelte": {
+			"types": "./dist/components/Svg/Rect.svelte.d.ts",
+			"svelte": "./dist/components/Svg/Rect.svelte",
+			"default": "./dist/components/Svg/Rect.svelte"
+		},
+		"./components/Svg/Ellipse.svelte": {
+			"types": "./dist/components/Svg/Ellipse.svelte.d.ts",
+			"svelte": "./dist/components/Svg/Ellipse.svelte",
+			"default": "./dist/components/Svg/Ellipse.svelte"
+		},
+		"./components/Svg/Line.svelte": {
+			"types": "./dist/components/Svg/Line.svelte.d.ts",
+			"svelte": "./dist/components/Svg/Line.svelte",
+			"default": "./dist/components/Svg/Line.svelte"
+		},
+		"./components/Svg/G.svelte": {
+			"types": "./dist/components/Svg/G.svelte.d.ts",
+			"svelte": "./dist/components/Svg/G.svelte",
+			"default": "./dist/components/Svg/G.svelte"
+		},
+		"./components/Svg/Defs.svelte": {
+			"types": "./dist/components/Svg/Defs.svelte.d.ts",
+			"svelte": "./dist/components/Svg/Defs.svelte",
+			"default": "./dist/components/Svg/Defs.svelte"
+		},
+		"./components/Svg/LinearGradient.svelte": {
+			"types": "./dist/components/Svg/LinearGradient.svelte.d.ts",
+			"svelte": "./dist/components/Svg/LinearGradient.svelte",
+			"default": "./dist/components/Svg/LinearGradient.svelte"
+		},
+		"./components/Svg/RadialGradient.svelte": {
+			"types": "./dist/components/Svg/RadialGradient.svelte.d.ts",
+			"svelte": "./dist/components/Svg/RadialGradient.svelte",
+			"default": "./dist/components/Svg/RadialGradient.svelte"
+		},
+		"./components/Svg/Stop.svelte": {
+			"types": "./dist/components/Svg/Stop.svelte.d.ts",
+			"svelte": "./dist/components/Svg/Stop.svelte",
+			"default": "./dist/components/Svg/Stop.svelte"
+		},
+		"./components/Svg/ClipPath.svelte": {
+			"types": "./dist/components/Svg/ClipPath.svelte.d.ts",
+			"svelte": "./dist/components/Svg/ClipPath.svelte",
+			"default": "./dist/components/Svg/ClipPath.svelte"
+		},
+		"./components/Svg/SvgText.svelte": {
+			"types": "./dist/components/Svg/SvgText.svelte.d.ts",
+			"svelte": "./dist/components/Svg/SvgText.svelte",
+			"default": "./dist/components/Svg/SvgText.svelte"
+		},
+		"./components/Svg/Tspan.svelte": {
+			"types": "./dist/components/Svg/Tspan.svelte.d.ts",
+			"svelte": "./dist/components/Svg/Tspan.svelte",
+			"default": "./dist/components/Svg/Tspan.svelte"
+		},
+		"./components/Svg/Polyline.svelte": {
+			"types": "./dist/components/Svg/Polyline.svelte.d.ts",
+			"svelte": "./dist/components/Svg/Polyline.svelte",
+			"default": "./dist/components/Svg/Polyline.svelte"
+		},
+		"./components/Svg/Polygon.svelte": {
+			"types": "./dist/components/Svg/Polygon.svelte.d.ts",
+			"svelte": "./dist/components/Svg/Polygon.svelte",
+			"default": "./dist/components/Svg/Polygon.svelte"
+		},
+		"./components/Table/Table.svelte": {
+			"types": "./dist/components/Table/Table.svelte.d.ts",
+			"svelte": "./dist/components/Table/Table.svelte",
+			"default": "./dist/components/Table/Table.svelte"
+		},
+		"./components/Table/Row.svelte": {
+			"types": "./dist/components/Table/Row.svelte.d.ts",
+			"svelte": "./dist/components/Table/Row.svelte",
+			"default": "./dist/components/Table/Row.svelte"
+		},
+		"./components/Table/Cell.svelte": {
+			"types": "./dist/components/Table/Cell.svelte.d.ts",
+			"svelte": "./dist/components/Table/Cell.svelte",
+			"default": "./dist/components/Table/Cell.svelte"
+		}
+	},
+	"files": [
+		"dist"
+	]
+}

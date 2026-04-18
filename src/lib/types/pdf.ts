@@ -125,6 +125,19 @@ export type StyleProps = {
   letterSpacing?: number;
   /** Text decoration: underline or line-through. */
   textDecoration?: "none" | "underline" | "line-through";
+  /**
+   * Minimum number of lines of a text block that must remain at the **bottom**
+   * of a page before a page break (orphan control). When fewer lines would fit,
+   * the entire block is deferred to the next page. Default: 1 (disabled).
+   */
+  orphans?: number;
+  /**
+   * Minimum number of lines of a text block that must appear at the **top** of
+   * a page after a page break (widow control). When fewer lines would remain,
+   * lines are moved from the current page to the next until the threshold is
+   * met. Default: 1 (disabled).
+   */
+  widows?: number;
   /** Background fill colour for a View / Cell. */
   backgroundColor?: string;
   /** Width of the border stroke drawn around a View / Cell, in points. */

@@ -52,6 +52,18 @@ export default {
 
 `sveltePDF()` must come **before** `sveltekit()` so it intercepts `.pdf.svelte` imports first.
 
+### TypeScript types for `.pdf.svelte` files
+
+The plugin automatically writes a companion `.d.ts` file alongside each `.pdf.svelte` template (e.g. `Invoice.pdf.svelte.d.ts`). This gives the TypeScript language server the correct `render()` signature and prevents the false "has no exported member 'render'" error caused by `svelte2tsx` generating its own `.d.ts` for every `.svelte` file.
+
+The files are generated at dev server startup, on every build, and on first import of each template. They are fully deterministic so clean rebuilds never produce dirty git state.
+
+Add the pattern to your `.gitignore` so generated files are not committed:
+
+```
+**/*.pdf.svelte.d.ts
+```
+
 ---
 
 ## Quick start

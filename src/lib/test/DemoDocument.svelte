@@ -254,6 +254,156 @@
 </Page>
 
 <!-- ══════════════════════════════════════════════════════════════════════ -->
+<!-- Orphan & Widow Control page                                            -->
+<!--                                                                        -->
+<!-- Demonstrates the orphans / widows style props.                         -->
+<!--                                                                        -->
+<!-- Side-by-side comparison:                                               -->
+<!--   Left  — orphans: 1 (default, disabled): a single orphaned line      -->
+<!--           remains at the bottom of this page and the rest of the       -->
+<!--           paragraph continues on the next page.                        -->
+<!--   Right — orphans: 2 (enabled): the entire paragraph is deferred to   -->
+<!--           the next page so no orphan appears.                          -->
+<!--                                                                        -->
+<!-- The <View style={{ height: N }}> spacers inside each column push the  -->
+<!-- demo paragraphs close to the page boundary.  Increase N if both       -->
+<!-- paragraphs still fit on this page; decrease N if neither shows any    -->
+<!-- content here.                                                          -->
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<Page size="A4" style={{ padding: 40 }}>
+
+	<!-- Title -->
+	<Text
+		text="Orphan & Widow Control"
+		style={{ fontFamily: 'Helvetica-Bold', fontSize: 20, color: brand, marginBottom: 4 }}
+	/>
+	<Text
+		text="Prevent isolated lines at page boundaries with the orphans and widows style props on <Text> nodes."
+		style={{ fontFamily: 'Helvetica-Oblique', fontSize: 9, color: muted, marginBottom: 20 }}
+	/>
+
+	<!-- What they are -->
+	<Text
+		text="What they are"
+		style={{ fontFamily: 'Helvetica-Bold', fontSize: 11, color: brand, marginBottom: 6 }}
+	/>
+	<Text
+		text="An orphan is the first line of a paragraph left alone at the bottom of a page while the rest continues on the next. A widow is the last line of a paragraph appearing alone at the top of a page, cut off from the body above it."
+		style={{ fontFamily: 'Helvetica', fontSize: 10, marginBottom: 8 }}
+	/>
+	<Text
+		text="Both are typographic defects that fragment reading flow. Professional typesetting systems require a minimum number of lines at each boundary so neither condition can arise."
+		style={{ fontFamily: 'Helvetica', fontSize: 10, marginBottom: 16 }}
+	/>
+
+	<!-- Style props -->
+	<Text
+		text="Style props"
+		style={{ fontFamily: 'Helvetica-Bold', fontSize: 11, color: brand, marginBottom: 6 }}
+	/>
+	<View style={{ backgroundColor: subtle, padding: 12, borderRadius: 4, marginBottom: 16 }}>
+		<Text
+			text="orphans: 2   — minimum lines kept at the bottom of a page (start of block)"
+			style={{ fontFamily: 'Courier', fontSize: 9, color: brand, marginBottom: 4 }}
+		/>
+		<Text
+			text="widows:  2   — minimum lines kept at the top    of a page (end of block)"
+			style={{ fontFamily: 'Courier', fontSize: 9, color: brand, marginBottom: 8 }}
+		/>
+		<Text
+			text="Both default to 1 (disabled). Set to 2 or more on any <Text> node to activate."
+			style={{ fontFamily: 'Helvetica-Oblique', fontSize: 8, color: muted }}
+		/>
+	</View>
+
+	<!-- How they work -->
+	<Text
+		text="How orphan control works"
+		style={{ fontFamily: 'Helvetica-Bold', fontSize: 11, color: brand, marginBottom: 6 }}
+	/>
+	<Text
+		text="When orphans: 2 is set, the paginator counts how many lines of the block fit before the page break. If fewer than two would be visible, the entire block is deferred to the next page — eliminating the orphan."
+		style={{ fontFamily: 'Helvetica', fontSize: 10, marginBottom: 14 }}
+	/>
+	<Text
+		text="How widow control works"
+		style={{ fontFamily: 'Helvetica-Bold', fontSize: 11, color: brand, marginBottom: 6 }}
+	/>
+	<Text
+		text="When widows: 2 is set, the paginator ensures at least two lines appear at the top of the next page. If only one line would remain, a line is moved forward from the current page so both sides of the break show at least two lines."
+		style={{ fontFamily: 'Helvetica', fontSize: 10, marginBottom: 18 }}
+	/>
+
+	<!-- Demo header -->
+	<Text
+		text="Live demo — orphan control"
+		style={{ fontFamily: 'Helvetica-Bold', fontSize: 11, color: brand, marginBottom: 4 }}
+	/>
+	<Text
+		text="Both panels below are positioned near the page boundary. Left uses orphans: 1 (disabled); right uses orphans: 2. Compare the bottom of this page with the top of the next to see the difference."
+		style={{ fontFamily: 'Helvetica-Oblique', fontSize: 9, color: muted, marginBottom: 10 }}
+	/>
+
+	<!-- Side-by-side comparison columns -->
+	<View style={{ flexDirection: 'row', gap: 12 }}>
+
+		<!-- Left: orphans disabled (default) -->
+		<View style={{ flexGrow: 1 }}>
+			<!--
+				Spacer pushes the demo paragraph close to the page boundary.
+				With the content above this section ~540 pt tall and a column
+				of ~251 pt available width, a spacer of ~130 pt leaves roughly
+				one line of the paragraph visible before the break — exactly the
+				orphan scenario.
+			-->
+			<View style={{ height: 130 }} />
+			<View style={{ borderWidth: 1, borderColor: '#fca5a5', borderRadius: 4, padding: 8 }}>
+				<Text
+					text="orphans: 1 — control disabled"
+					style={{ fontFamily: 'Helvetica-Bold', fontSize: 8, color: '#ef4444', marginBottom: 4 }}
+				/>
+				<Text
+					text="Orphan control is off. If only one line fits before the page break it is left here as an orphan, disconnected from the rest of the paragraph which continues at the top of the next page. This is the default behaviour when orphans is not set."
+					style={{ fontFamily: 'Helvetica', fontSize: 9, orphans: 1 }}
+				/>
+			</View>
+		</View>
+
+		<!-- Right: orphans: 2 -->
+		<View style={{ flexGrow: 1 }}>
+			<View style={{ height: 130 }} />
+			<View style={{ borderWidth: 1, borderColor: '#86efac', borderRadius: 4, padding: 8 }}>
+				<Text
+					text="orphans: 2 — orphan prevented"
+					style={{ fontFamily: 'Helvetica-Bold', fontSize: 8, color: '#16a34a', marginBottom: 4 }}
+				/>
+				<Text
+					text="Orphan control is on. Because fewer than two lines fit before the page break, the entire paragraph is moved to the next page intact. No isolated line appears at the bottom here — the paragraph opens cleanly at the top of the following page."
+					style={{ fontFamily: 'Helvetica', fontSize: 9, orphans: 2 }}
+				/>
+			</View>
+		</View>
+
+	</View>
+
+	<!-- Fixed footer -->
+	<View
+		fixed={true}
+		style={{ position: 'absolute', bottom: 20, left: 40, right: 40, flexDirection: 'row', justifyContent: 'space-between' }}
+	>
+		<Text
+			text="Acme Corp · Confidential"
+			style={{ fontFamily: 'Helvetica-Oblique', fontSize: 8, color: muted }}
+		/>
+		<Text
+			render={pageFooter}
+			style={{ fontFamily: 'Helvetica', fontSize: 8, color: muted }}
+		/>
+	</View>
+
+</Page>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
 <!-- SVG Feature Gallery page                                               -->
 <!-- ══════════════════════════════════════════════════════════════════════ -->
 <Page size="A4" style={{ padding: 40 }}>

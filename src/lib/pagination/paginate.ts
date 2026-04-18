@@ -139,6 +139,11 @@ function paginatePage(page: PDFNode): PDFNode[] {
 	const outputPages: PDFNode[] = [];
 	let pageIndex = 0;
 
+	// Tracks how many lines of each text node have already been placed on
+	// previous pages.  Shared across all page slots so widow/orphan adjustments
+	// from one page are reflected accurately on the next.
+	const nodeProgress = new Map<PDFNode, number>();
+
 	while (true) {
 		// Page 0 uses the full Yoga-computed band [0, contentEnd).
 		// Pages 1+ use [contentEnd + (N-1)*contentHeight, contentEnd + N*contentHeight).
@@ -157,7 +162,7 @@ function paginatePage(page: PDFNode): PDFNode[] {
 
 		const slicedChildren = page.children
 			.filter((c) => !c.props.fixed)
-			.map((child) => sliceNode(child, yStart, yEnd, yOffset))
+			.map((child) => sliceNode(child, yStart, yEnd, yOffset, nodeProgress))
 			.filter((c): c is PDFNode => c !== null);
 
 		// Always emit the first page even if empty (a <Page> with no content is
@@ -189,8 +194,19 @@ function paginatePage(page: PDFNode): PDFNode[] {
  * `yOffset` is non-zero on overflow pages when the page has paddingTop: it
  * shifts content down so it starts in the correct padded position on the
  * new page.
+ *
+ * `nodeProgress` tracks how many lines of each text node have already been
+ * placed on previous pages.  Using explicit progress rather than inferring
+ * from y-coordinates ensures widow/orphan adjustments on one page are
+ * correctly reflected on subsequent pages.
  */
-function sliceNode(node: PDFNode, yStart: number, yEnd: number, yOffset = 0): PDFNode | null {
+function sliceNode(
+	node: PDFNode,
+	yStart: number,
+	yEnd: number,
+	yOffset = 0,
+	nodeProgress = new Map<PDFNode, number>()
+): PDFNode | null {
 	// Fixed nodes are handled separately — exclude from flow slicing.
 	if (node.props.fixed) return null;
 
@@ -222,10 +238,10 @@ function sliceNode(node: PDFNode, yStart: number, yEnd: number, yOffset = 0): PD
 		if (lineHeight > 0) {
 			const lines = wrapLines(text, style, layout.width);
 
-			// Lines already consumed by previous pages (when the text node started
-			// above the current page slot's top boundary).
-			const linesBefore =
-				nodeTop < yStart ? Math.floor((yStart - nodeTop) / lineHeight) : 0;
+			// Use explicit progress tracking rather than inferring from y-geometry.
+			// This ensures widow/orphan adjustments on a previous page are not
+			// undone by a stale geometry-based linesBefore calculation.
+			const linesBefore = nodeProgress.get(node) ?? 0;
 
 			// Top of the visible portion of this text node within this page slot.
 			const visibleTop = Math.max(nodeTop, yStart);
@@ -233,9 +249,47 @@ function sliceNode(node: PDFNode, yStart: number, yEnd: number, yOffset = 0): PD
 			// Lines available in the remaining vertical space on this page.
 			const linesAvailable = Math.max(0, Math.floor((yEnd - visibleTop) / lineHeight));
 
-			const pageLines = lines.slice(linesBefore, linesBefore + linesAvailable);
+			// ── Widow / orphan control ─────────────────────────────────────────
+			// Both props default to 1, which preserves the original behaviour
+			// (no adjustment).  Set either to 2 or more to activate control.
+			const minOrphans = (style.orphans as number | undefined) ?? 1;
+			const minWidows  = (style.widows  as number | undefined) ?? 1;
+
+			const totalLines     = lines.length;
+			const remainingLines = totalLines - linesBefore;
+			const isStart        = linesBefore === 0;
+
+			let lineCount = Math.min(linesAvailable, remainingLines);
+			const isEnd   = linesBefore + lineCount >= totalLines;
+
+			// Orphan control: text starts on this page but too few lines fit
+			// before the page break — defer the entire block to the next page.
+			// nodeProgress is NOT updated so the next page starts from line 0.
+			if (!isEnd && isStart && lineCount < minOrphans) {
+				return null;
+			}
+
+			// Widow control: too few lines would remain for the next page after
+			// this slot — reduce lineCount so the next page gets enough lines.
+			if (!isEnd) {
+				const linesAfter = remainingLines - lineCount;
+				if (linesAfter > 0 && linesAfter < minWidows) {
+					const deficit = minWidows - linesAfter;
+					lineCount = Math.max(0, lineCount - deficit);
+					if (lineCount === 0) return null;
+					// Re-check orphan constraint after the widow reduction.
+					if (isStart && lineCount < minOrphans) {
+						return null;
+					}
+				}
+			}
+
+			const pageLines = lines.slice(linesBefore, linesBefore + lineCount);
 
 			if (pageLines.length === 0) return null;
+
+			// Record progress so the next page starts from the correct line.
+			nodeProgress.set(node, linesBefore + lineCount);
 
 			return {
 				...node,
@@ -258,15 +312,19 @@ function sliceNode(node: PDFNode, yStart: number, yEnd: number, yOffset = 0): PD
 
 	// Container — recurse into children.
 	const slicedChildren = node.children
-		.map((child) => sliceNode(child, yStart, yEnd, yOffset))
+		.map((child) => sliceNode(child, yStart, yEnd, yOffset, nodeProgress))
 		.filter((c): c is PDFNode => c !== null);
 
-	// If the node had children but all were excluded from this page slot, and
-	// the node itself extends past the page boundary, it belongs entirely on
-	// the next page.  Returning null here prevents an empty styled box (e.g. a
-	// table row's background / border) from appearing on page 1 and overlapping
-	// the footer.
-	if (node.children.length > 0 && slicedChildren.length === 0 && nodeBottom > yEnd) {
+	// If the node had children but all were excluded from this page slot, there
+	// is nothing to draw here.  Two reasons this can happen:
+	//   1. All content starts after this page's boundary (nodeBottom > yEnd) —
+	//      the container belongs entirely to the next page.
+	//   2. All content was already rendered on a previous page (e.g. a row that
+	//      physically straddles the boundary but whose text was fully consumed
+	//      on page 1) — nothing remains to show on this page.
+	// In both cases returning null prevents an empty styled box (background /
+	// border) from appearing with no content.
+	if (node.children.length > 0 && slicedChildren.length === 0) {
 		return null;
 	}
 

@@ -134,6 +134,14 @@ const justifyMap: Record<string, number> = {
 	'space-evenly': Justify.SpaceEvenly
 };
 
+function setDim(node: any, method: string, value: number | string): void {
+	if (typeof value === 'string' && value.endsWith('%')) {
+		node[method + 'Percent'](parseFloat(value));
+	} else {
+		node[method](value);
+	}
+}
+
 function applyStyle(yogaNode: any, node: PDFNode): void {
 	const s = node.props.style ?? {};
 
@@ -147,12 +155,12 @@ function applyStyle(yogaNode: any, node: PDFNode): void {
 	if (s.justifyContent != null)
 		yogaNode.setJustifyContent(justifyMap[s.justifyContent] ?? Justify.FlexStart);
 
-	if (s.width != null) yogaNode.setWidth(s.width);
-	if (s.height != null) yogaNode.setHeight(s.height);
-	if (s.minWidth != null) yogaNode.setMinWidth(s.minWidth);
-	if (s.maxWidth != null) yogaNode.setMaxWidth(s.maxWidth);
-	if (s.minHeight != null) yogaNode.setMinHeight(s.minHeight);
-	if (s.maxHeight != null) yogaNode.setMaxHeight(s.maxHeight);
+	if (s.width != null) setDim(yogaNode, 'setWidth', s.width);
+	if (s.height != null) setDim(yogaNode, 'setHeight', s.height);
+	if (s.minWidth != null) setDim(yogaNode, 'setMinWidth', s.minWidth);
+	if (s.maxWidth != null) setDim(yogaNode, 'setMaxWidth', s.maxWidth);
+	if (s.minHeight != null) setDim(yogaNode, 'setMinHeight', s.minHeight);
+	if (s.maxHeight != null) setDim(yogaNode, 'setMaxHeight', s.maxHeight);
 
 	if (s.gap != null) yogaNode.setGap(Gutter.All, s.gap);
 

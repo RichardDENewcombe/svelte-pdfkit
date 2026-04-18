@@ -79,7 +79,9 @@ export function getLineHeight(style: Record<string, any>): number {
  * Returns an array of line strings. An empty `text` returns `[]`.
  */
 export function wrapLines(text: string, style: Record<string, any>, maxWidth: number): string[] {
-	if (!text) return [];
+	const safeText = text != null ? String(text) : '';
+	if (!safeText) return [];
+	text = safeText;
 
 	const doc = getMeasureDoc();
 	const fontSize = style.fontSize ?? 12;

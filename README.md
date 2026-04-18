@@ -522,6 +522,8 @@ All layout components accept a `style` prop typed as `StyleProps`.
 | `opacity`                                                                                             | number (0–1)     |
 | `borderWidth`                                                                                         | number (points)  |
 | `borderColor`                                                                                         | CSS color string |
+| `borderTopWidth` / `borderRightWidth` / `borderBottomWidth` / `borderLeftWidth`                       | number (points)  |
+| `borderTopColor` / `borderRightColor` / `borderBottomColor` / `borderLeftColor`                       | CSS color string |
 | `borderRadius`                                                                                        | number (points)  |
 | `borderTopLeftRadius` / `borderTopRightRadius` / `borderBottomLeftRadius` / `borderBottomRightRadius` | number           |
 

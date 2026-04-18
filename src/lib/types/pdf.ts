@@ -103,10 +103,10 @@ export type StyleProps = {
   paddingLeft?: number;
   width?: number | string;
   height?: number | string;
-  minWidth?: number;
-  maxWidth?: number;
-  minHeight?: number;
-  maxHeight?: number;
+  minWidth?: number | string;
+  maxWidth?: number | string;
+  minHeight?: number | string;
+  maxHeight?: number | string;
   position?: "relative" | "absolute";
   top?: number;
   right?: number;
@@ -131,6 +131,16 @@ export type StyleProps = {
   borderWidth?: number;
   /** Colour of the border. Defaults to black when borderWidth is set. */
   borderColor?: string;
+  /** Per-side border widths. These take precedence over `borderWidth` for their side. */
+  borderTopWidth?: number;
+  borderRightWidth?: number;
+  borderBottomWidth?: number;
+  borderLeftWidth?: number;
+  /** Per-side border colours. Falls back to `borderColor` then black. */
+  borderTopColor?: string;
+  borderRightColor?: string;
+  borderBottomColor?: string;
+  borderLeftColor?: string;
   /** Border corner radius in points — applies to all four corners. */
   borderRadius?: number;
   /** Per-corner border radii. These take precedence over `borderRadius`. */

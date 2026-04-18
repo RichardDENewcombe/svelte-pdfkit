@@ -39,7 +39,7 @@
 		// Yoga measures with placeholder values (0, 0) to estimate space.
 		parent.children.push({ type: 'text', props: { render: renderFn, style }, children: [] });
 	} else {
-		let resolvedText = textProp ?? '';
+		let resolvedText = textProp != null ? String(textProp) : '';
 
 		if (!textProp && children) {
 			// In Svelte 5 SSR, snippets compile to ($$renderer) => void functions.

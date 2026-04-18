@@ -215,7 +215,7 @@ function sliceNode(node: PDFNode, yStart: number, yEnd: number, yOffset = 0): PD
 	// Render-prop text (page numbers etc.) is always a short single-line string
 	// and is excluded from splitting — we fall through to the leaf path below.
 	if (node.type === 'text' && typeof node.props.render !== 'function') {
-		const text = node.props.text ?? '';
+		const text = node.props.text != null ? String(node.props.text) : '';
 		const style = node.props.style ?? {};
 		const lineHeight = getLineHeight(style);
 

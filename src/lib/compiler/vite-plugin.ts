@@ -47,7 +47,7 @@
  */
 
 import { compile } from 'svelte/compiler';
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import type { Plugin } from 'vite';
 
@@ -118,6 +118,15 @@ export function sveltePDF(): Plugin {
 					// If the resolved file is itself a .pdf.svelte, wrap it too.
 					if (absolutePath.endsWith('.pdf.svelte')) {
 						return VIRTUAL_PREFIX + absolutePath.slice(0, -'.svelte'.length);
+					}
+
+					// The Svelte compiler preserves imports with their original extensions,
+					// but TypeScript source files use .ts on disk while imports reference
+					// .js (the JS output convention). When the resolved .js path does not
+					// exist, fall back to .ts so Vite can load the TypeScript source.
+					if (absolutePath.endsWith('.js') && !existsSync(absolutePath)) {
+						const tsPath = absolutePath.slice(0, -3) + '.ts';
+						if (existsSync(tsPath)) return tsPath;
 					}
 
 					// Otherwise return the absolute path so Vite can find it on disk.

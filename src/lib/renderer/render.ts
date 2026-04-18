@@ -64,7 +64,8 @@ function drawNodes(doc: any, nodes: PDFNode[], pageNumber = 1, totalPages = 1): 
 			case 'view': {
 				// Draw background fill and/or border before rendering children.
 				const s = node.props.style ?? {};
-				if (node.layout && (s.backgroundColor || s.borderWidth)) {
+				const hasSideBorder = s.borderTopWidth || s.borderRightWidth || s.borderBottomWidth || s.borderLeftWidth;
+				if (node.layout && (s.backgroundColor || s.borderWidth || hasSideBorder)) {
 					const { x = 0, y = 0, width = 0, height = 0 } = node.layout;
 					doc.save();
 					const r = s.borderRadius ?? 0;
@@ -86,6 +87,25 @@ function drawNodes(doc: any, nodes: PDFNode[], pageNumber = 1, totalPages = 1): 
 						doc.clip();
 						drawRoundedRectPath(doc, x, y, width, height, tl, tr, brr, bl);
 						doc.lineWidth(s.borderWidth * 2).stroke(s.borderColor ?? 'black');
+					}
+
+					// Per-side borders — drawn as individual lines (no border-radius).
+					const fallbackColor = s.borderColor ?? 'black';
+					if (s.borderTopWidth) {
+						doc.moveTo(x, y).lineTo(x + width, y)
+							.lineWidth(s.borderTopWidth).stroke(s.borderTopColor ?? fallbackColor);
+					}
+					if (s.borderRightWidth) {
+						doc.moveTo(x + width, y).lineTo(x + width, y + height)
+							.lineWidth(s.borderRightWidth).stroke(s.borderRightColor ?? fallbackColor);
+					}
+					if (s.borderBottomWidth) {
+						doc.moveTo(x, y + height).lineTo(x + width, y + height)
+							.lineWidth(s.borderBottomWidth).stroke(s.borderBottomColor ?? fallbackColor);
+					}
+					if (s.borderLeftWidth) {
+						doc.moveTo(x, y).lineTo(x, y + height)
+							.lineWidth(s.borderLeftWidth).stroke(s.borderLeftColor ?? fallbackColor);
 					}
 
 					doc.restore();

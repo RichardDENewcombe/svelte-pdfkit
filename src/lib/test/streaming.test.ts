@@ -130,9 +130,8 @@ describe('streaming renderer (milestone 34)', () => {
 		if (typeof global.gc === 'function') global.gc();
 		const heapAfter = process.memoryUsage().heapUsed;
 
-		// Allow up to 150 MB of retained heap for a 500-page document.
-		// In practice this should be well under 50 MB.
+		// 500 pages of minimal content should not retain more than 50 MB.
 		const growthMB = (heapAfter - heapBefore) / 1024 / 1024;
-		expect(growthMB).toBeLessThan(150);
+		expect(growthMB).toBeLessThan(50);
 	}, 30_000);
 });

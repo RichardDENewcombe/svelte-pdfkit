@@ -160,11 +160,16 @@ export function measureText(
 		style.lineHeight != null ? naturalLineHeight * style.lineHeight : naturalLineHeight;
 
 	if (constrainedWidth > 0) {
+		// Use actual word-wrapping to count lines so the Yoga-computed height
+		// matches the paginator's line splitting exactly.  The simple
+		// ceil(totalWidth / constrainedWidth) approximation ignores word
+		// boundaries and can produce heights that differ from the real wrap,
+		// causing content to be misplaced across page boundaries.
+		const wrappedLines = wrapLines(text, style, constrainedWidth);
 		const fullWidth = doc.widthOfString(text);
-		const lines = Math.max(1, Math.ceil(fullWidth / constrainedWidth));
 		return {
 			width: Math.min(fullWidth, constrainedWidth),
-			height: lineHeight * lines
+			height: lineHeight * Math.max(1, wrappedLines.length)
 		};
 	}
 

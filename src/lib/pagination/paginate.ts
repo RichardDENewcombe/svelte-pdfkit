@@ -328,7 +328,25 @@ function sliceNode(
 		return null;
 	}
 
-	return { ...node, layout: adjustedLayout, children: slicedChildren };
+	// On overflow pages a container may have started on the previous page
+	// (adjustedLayout.y < yOffset, i.e. before the top padding).  Clamp its y
+	// to yOffset and grow the height to cover all of its sliced children so
+	// the border / background renders around the actual visible content rather
+	// than mostly off the top of the page.
+	let effectiveLayout = adjustedLayout;
+	if (slicedChildren.length > 0 && adjustedLayout.y < yOffset) {
+		const maxChildBottom = slicedChildren.reduce((max, child) => {
+			if (!child.layout) return max;
+			return Math.max(max, child.layout.y + child.layout.height);
+		}, yOffset);
+		effectiveLayout = {
+			...adjustedLayout,
+			y: yOffset,
+			height: Math.max(maxChildBottom - yOffset, 0)
+		};
+	}
+
+	return { ...node, layout: effectiveLayout, children: slicedChildren };
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────

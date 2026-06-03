@@ -107,10 +107,7 @@ describe('paginate – y coordinates are page-relative', () => {
 		for (const page of pages) {
 			const leaves = collectLeaves(page);
 			for (const leaf of leaves) {
-				// Nodes that straddle a boundary may have a small negative y
-				// (the top portion clipped by the previous page). We allow a
-				// small tolerance but no large negatives.
-				expect(leaf.layout!.y).toBeGreaterThan(-50);
+				expect(leaf.layout!.y).toBeGreaterThanOrEqual(0);
 			}
 		}
 	});
@@ -142,11 +139,9 @@ describe('paginate – y coordinates are page-relative', () => {
 		const pages = renderAndPaginate(OverflowTemplate, { count: 50 });
 		for (const page of pages) {
 			const pageHeight = page.props.height;
-			const leaves = collectLeaves(page).filter(n => n.type !== 'view');
+			const leaves = collectLeaves(page);
 			for (const leaf of leaves) {
-				// A node's top should be below the page bottom.
-				// (Its bottom may slightly exceed due to boundary-straddling.)
-				expect(leaf.layout!.y).toBeLessThan(pageHeight + 50);
+				expect(leaf.layout!.y).toBeLessThan(pageHeight);
 			}
 		}
 	});

@@ -348,15 +348,15 @@
 	<View style={{ flexDirection: 'row', gap: 12 }}>
 
 		<!-- Left: orphans disabled (default) -->
-		<View style={{ flexGrow: 1 }}>
+		<View style={{ flexGrow: 1, flexShrink: 1, flexBasis: 0 }}>
 			<!--
 				Spacer pushes the demo paragraph close to the page boundary.
-				With the content above this section ~540 pt tall and a column
-				of ~251 pt available width, a spacer of ~130 pt leaves roughly
-				one line of the paragraph visible before the break — exactly the
-				orphan scenario.
+				With the content above this section ~536 pt tall, page content
+				area 762 pt (842 − 2×40 padding), a spacer of ~235 pt places
+				exactly ~1 line of the paragraph before the page break — the
+				orphan scenario.  Adjust if the surrounding content changes.
 			-->
-			<View style={{ height: 130 }} />
+			<View style={{ height: 235 }} />
 			<View style={{ borderWidth: 1, borderColor: '#fca5a5', borderRadius: 4, padding: 8 }}>
 				<Text
 					text="orphans: 1 — control disabled"
@@ -370,8 +370,8 @@
 		</View>
 
 		<!-- Right: orphans: 2 -->
-		<View style={{ flexGrow: 1 }}>
-			<View style={{ height: 130 }} />
+		<View style={{ flexGrow: 1, flexShrink: 1, flexBasis: 0 }}>
+			<View style={{ height: 235 }} />
 			<View style={{ borderWidth: 1, borderColor: '#86efac', borderRadius: 4, padding: 8 }}>
 				<Text
 					text="orphans: 2 — orphan prevented"

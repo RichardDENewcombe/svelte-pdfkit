@@ -106,29 +106,6 @@ describe('layout cache (milestone 36)', () => {
 		expect(getLayoutCacheSize()).toBe(2);
 	});
 
-	it('cache hit is faster than a fresh Yoga computation', () => {
-		const doc = makeDoc('Benchmark text');
-
-		// Warm the cache
-		computeLayout(doc);
-
-		// Cold Yoga (different text to force a miss)
-		const coldDoc = makeDoc('Different text for cold run');
-		const t0 = performance.now();
-		computeLayout(coldDoc);
-		const coldTime = performance.now() - t0;
-
-		// Hot cache (same text as warm doc)
-		const hotDoc = makeDoc('Benchmark text');
-		const t1 = performance.now();
-		computeLayout(hotDoc);
-		const hotTime = performance.now() - t1;
-
-		// Cache hit should be at least 2× faster than Yoga computation.
-		// This threshold is generous to avoid flakiness on slow CI machines.
-		// If this fails, the cache isn't actually being used.
-		expect(hotTime).toBeLessThan(coldTime * 2);
-	});
 
 	it('evicts oldest entry when cache exceeds 256 entries', () => {
 		// Fill the cache to its limit

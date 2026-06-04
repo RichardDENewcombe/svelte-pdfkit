@@ -49,7 +49,7 @@
  */
 
 import type { DocumentContext, PDFNode } from '../types/pdf.js';
-import { getLineHeight, wrapLines } from '../layout/text-measure.js';
+import { getLineHeight, wrapLinesMeta } from '../layout/text-measure.js';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -243,7 +243,7 @@ function sliceNode(
 		const lineHeight = getLineHeight(style);
 
 		if (lineHeight > 0) {
-			const lines = wrapLines(text, style, layout.width);
+			const lines = wrapLinesMeta(text, style, layout.width);
 
 			// Use explicit progress tracking rather than inferring from y-geometry.
 			// This ensures widow/orphan adjustments on a previous page are not
@@ -298,9 +298,20 @@ function sliceNode(
 			// Record progress so the next page starts from the correct line.
 			nodeProgress.set(node, linesBefore + lineCount);
 
+			// Joining wrapped lines with '\n' loses the paragraph structure that
+			// justification depends on, so for justified text we carry the sliced
+			// line metadata through on a dedicated prop the renderer reads.
+			const newProps: Record<string, any> = {
+				...node.props,
+				text: pageLines.map((l) => l.text).join('\n')
+			};
+			if (style.textAlign === 'justify') {
+				newProps.justifyLines = pageLines;
+			}
+
 			return {
 				...node,
-				props: { ...node.props, text: pageLines.join('\n') },
+				props: newProps,
 				layout: {
 					...layout,
 					y: visibleTop - yStart + yOffset,

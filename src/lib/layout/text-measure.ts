@@ -65,8 +65,21 @@ export function getLineHeight(style: Record<string, any>): number {
 	return style.lineHeight != null ? natural * style.lineHeight : natural;
 }
 
+/** A single wrapped line plus the metadata justification needs. */
+export interface WrappedLine {
+	text: string;
+	/**
+	 * True when this line is the final line of its source paragraph — i.e. a
+	 * hard newline follows it, or it is the end of the text. Justified text must
+	 * NOT stretch these lines: the last line of a paragraph always renders at its
+	 * natural width.
+	 */
+	lastInParagraph: boolean;
+}
+
 /**
- * Word-wraps `text` to fit within `maxWidth` points using PDFKit font metrics.
+ * Word-wraps `text` to fit within `maxWidth` points using PDFKit font metrics,
+ * returning each line together with whether it ends its source paragraph.
  *
  * Splits on explicit newlines first, then applies greedy word-wrap within each
  * paragraph. Words wider than `maxWidth` are placed on their own line without
@@ -76,9 +89,13 @@ export function getLineHeight(style: Record<string, any>): number {
  * but that is guaranteed because `getLineHeight` is always called first in the
  * split path and sets the font state.
  *
- * Returns an array of line strings. An empty `text` returns `[]`.
+ * Returns an array of {@link WrappedLine}. An empty `text` returns `[]`.
  */
-export function wrapLines(text: string, style: Record<string, any>, maxWidth: number): string[] {
+export function wrapLinesMeta(
+	text: string,
+	style: Record<string, any>,
+	maxWidth: number
+): WrappedLine[] {
 	const safeText = text != null ? String(text) : '';
 	if (!safeText) return [];
 	text = safeText;
@@ -98,17 +115,19 @@ export function wrapLines(text: string, style: Record<string, any>, maxWidth: nu
 		}
 	}
 
-	const lines: string[] = [];
+	const result: WrappedLine[] = [];
 
 	for (const paragraph of text.split('\n')) {
 		if (maxWidth <= 0) {
-			// No width constraint — each paragraph is one line.
-			lines.push(paragraph);
+			// No width constraint — each paragraph is one line, and that line ends
+			// the paragraph.
+			result.push({ text: paragraph, lastInParagraph: true });
 			continue;
 		}
 
 		const words = paragraph.split(' ');
 		let current = '';
+		const paraLines: string[] = [];
 
 		for (const word of words) {
 			if (!current) {
@@ -118,16 +137,28 @@ export function wrapLines(text: string, style: Record<string, any>, maxWidth: nu
 				if (doc.widthOfString(candidate) <= maxWidth) {
 					current = candidate;
 				} else {
-					lines.push(current);
+					paraLines.push(current);
 					current = word;
 				}
 			}
 		}
 
-		lines.push(current);
+		paraLines.push(current);
+
+		paraLines.forEach((line, i) => {
+			result.push({ text: line, lastInParagraph: i === paraLines.length - 1 });
+		});
 	}
 
-	return lines;
+	return result;
+}
+
+/**
+ * Word-wraps `text` into plain line strings — a thin wrapper over
+ * {@link wrapLinesMeta} for callers that don't need paragraph metadata.
+ */
+export function wrapLines(text: string, style: Record<string, any>, maxWidth: number): string[] {
+	return wrapLinesMeta(text, style, maxWidth).map((l) => l.text);
 }
 
 export function measureText(

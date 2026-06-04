@@ -1,6 +1,8 @@
 <!--
 	Demo document: exercises page numbers, tables, remote images, font variants,
-	SVG primitives, gradients, clip paths, and SVG text in a multi-page PDF.
+	SVG primitives, gradients, clip paths, SVG text, explicit page breaks
+	(breakBefore / breakAfter), justified text (textAlign: 'justify'), and
+	keep-with-next pagination control in a multi-page PDF.
 
 	Render it with:
 	  import { renderComponent } from 'svelte-pdf';
@@ -786,6 +788,384 @@
 		</Defs>
 		<Rect x={0} y={0} width={515} height={80} fill="url(#combo-grad)" clipPath="url(#combo-clip)" />
 	</Svg>
+
+	<!-- Fixed footer -->
+	<View
+		fixed={true}
+		style={{ position: 'absolute', bottom: 20, left: 40, right: 40, flexDirection: 'row', justifyContent: 'space-between' }}
+	>
+		<Text
+			text="Acme Corp · Confidential"
+			style={{ fontFamily: 'Helvetica-Oblique', fontSize: 8, color: muted }}
+		/>
+		<Text
+			render={pageFooter}
+			style={{ fontFamily: 'Helvetica', fontSize: 8, color: muted }}
+		/>
+	</View>
+
+</Page>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<!-- Explicit Page Breaks page                                               -->
+<!--                                                                        -->
+<!-- Demonstrates breakBefore and breakAfter props on View nodes.           -->
+<!--                                                                        -->
+<!-- All three sections live inside a single <Page> element.  The           -->
+<!-- paginator splits it into three physical pages:                         -->
+<!--   Page N   — title, explanation, and Section A                        -->
+<!--   Page N+1 — Section B (breakBefore) + isolated block (breakAfter)    -->
+<!--   Page N+2 — Section C pushed here by the breakAfter above            -->
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<Page size="A4" style={{ padding: 40 }}>
+
+	<!-- Title -->
+	<Text
+		text="Explicit Page Breaks"
+		style={{ fontFamily: 'Helvetica-Bold', fontSize: 20, color: brand, marginBottom: 4 }}
+	/>
+	<Text
+		text="Force page boundaries at specific points with breakBefore and breakAfter props on View, Text, and Image."
+		style={{ fontFamily: 'Helvetica-Oblique', fontSize: 9, color: muted, marginBottom: 20 }}
+	/>
+
+	<!-- What they do -->
+	<Text
+		text="breakBefore"
+		style={{ fontFamily: 'Helvetica-Bold', fontSize: 11, color: brand, marginBottom: 6 }}
+	/>
+	<Text
+		text="Inserting breakBefore on a node tells the paginator to start a new page immediately before that node, regardless of how much space remains on the current page. The node always appears at the top of the new page."
+		style={{ fontFamily: 'Helvetica', fontSize: 10, marginBottom: 14 }}
+	/>
+
+	<Text
+		text="breakAfter"
+		style={{ fontFamily: 'Helvetica-Bold', fontSize: 11, color: brand, marginBottom: 6 }}
+	/>
+	<Text
+		text="Inserting breakAfter on a node tells the paginator to start a new page immediately after that node. All subsequent flow content begins at the top of the new page."
+		style={{ fontFamily: 'Helvetica', fontSize: 10, marginBottom: 14 }}
+	/>
+
+	<!-- Usage reference -->
+	<View style={{ backgroundColor: subtle, padding: 12, borderRadius: 4, marginBottom: 20 }}>
+		<Text
+			text={'<View breakBefore>   — start this block on a new page'}
+			style={{ fontFamily: 'Courier', fontSize: 9, color: brand, marginBottom: 4 }}
+		/>
+		<Text
+			text={'<View breakAfter>    — push everything after this to a new page'}
+			style={{ fontFamily: 'Courier', fontSize: 9, color: brand, marginBottom: 8 }}
+		/>
+		<Text
+			text="Both props are supported on View, Text, and Image components. They do not affect fixed nodes."
+			style={{ fontFamily: 'Helvetica-Oblique', fontSize: 8, color: muted }}
+		/>
+	</View>
+
+	<!-- Live demo intro -->
+	<Text
+		text="Live demo — three sections across three pages"
+		style={{ fontFamily: 'Helvetica-Bold', fontSize: 11, color: brand, marginBottom: 6 }}
+	/>
+	<Text
+		text="Section A is below. Section B carries breakBefore so it starts at the top of the next page — even though this page has space remaining. Section C is pushed to a third page by breakAfter on the block above it."
+		style={{ fontFamily: 'Helvetica-Oblique', fontSize: 9, color: muted, marginBottom: 14 }}
+	/>
+
+	<!-- ── Section A (stays on this page) ────────────────────────────────── -->
+	<View style={{ backgroundColor: '#dbeafe', borderRadius: 6, padding: 16, marginBottom: 10 }}>
+		<Text
+			text="Section A"
+			style={{ fontFamily: 'Helvetica-Bold', fontSize: 13, color: brand, marginBottom: 6 }}
+		/>
+		<Text
+			text="This section lives on the first page of the demo. It contains enough content to make it obvious that space is left on the page before the forced break fires."
+			style={{ fontFamily: 'Helvetica', fontSize: 10, marginBottom: 8 }}
+		/>
+		<Text
+			text="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat."
+			style={{ fontFamily: 'Helvetica', fontSize: 10 }}
+		/>
+	</View>
+
+	<!-- Callout: space remains but break will fire -->
+	<View style={{ borderWidth: 1, borderColor: '#fca5a5', borderRadius: 4, padding: 10, marginBottom: 6 }}>
+		<Text
+			text="Space remains on this page — but Section B is forced onto the next page by breakBefore."
+			style={{ fontFamily: 'Helvetica-Oblique', fontSize: 9, color: '#b91c1c' }}
+		/>
+	</View>
+
+	<!-- ── Section B — breakBefore fires here, new page starts ───────────── -->
+	<View
+		breakBefore={true}
+		style={{ backgroundColor: '#dcfce7', borderRadius: 6, padding: 16, marginBottom: 14 }}
+	>
+		<Text
+			text="Section B  ← starts here due to breakBefore"
+			style={{ fontFamily: 'Helvetica-Bold', fontSize: 13, color: '#15803d', marginBottom: 6 }}
+		/>
+		<Text
+			text="This block was given breakBefore. No matter how much space was left on the previous page, the paginator opened a fresh page and placed this block at the top."
+			style={{ fontFamily: 'Helvetica', fontSize: 10, marginBottom: 8 }}
+		/>
+		<Text
+			text="Use breakBefore for chapter headings, new document sections, or any content that must always begin at the top of a page."
+			style={{ fontFamily: 'Helvetica', fontSize: 10 }}
+		/>
+	</View>
+
+	<!-- breakAfter explanation on Section B's page -->
+	<Text
+		text="breakAfter demo"
+		style={{ fontFamily: 'Helvetica-Bold', fontSize: 11, color: brand, marginBottom: 6 }}
+	/>
+	<Text
+		text="The highlighted block below has breakAfter set. Section C will begin on the next page even though there is space remaining on this one."
+		style={{ fontFamily: 'Helvetica-Oblique', fontSize: 9, color: muted, marginBottom: 10 }}
+	/>
+
+	<!-- Block with breakAfter -->
+	<View
+		breakAfter={true}
+		style={{ backgroundColor: '#fef9c3', borderRadius: 6, padding: 16, borderWidth: 1, borderColor: '#ca8a04' }}
+	>
+		<Text
+			text="Isolated Block  (breakAfter)"
+			style={{ fontFamily: 'Helvetica-Bold', fontSize: 12, color: '#92400e', marginBottom: 6 }}
+		/>
+		<Text
+			text="breakAfter is set on this view. The paginator inserts a page break immediately after its bottom edge. Everything below — including Section C — moves to the next page."
+			style={{ fontFamily: 'Helvetica', fontSize: 10 }}
+		/>
+	</View>
+
+	<!-- ── Section C — pushed here by breakAfter above ───────────────────── -->
+	<View style={{ backgroundColor: '#f3e8ff', borderRadius: 6, padding: 16 }}>
+		<Text
+			text="Section C  ← pushed here by breakAfter"
+			style={{ fontFamily: 'Helvetica-Bold', fontSize: 13, color: '#7c3aed', marginBottom: 6 }}
+		/>
+		<Text
+			text="This section follows the breakAfter block in the source, so the paginator placed it at the top of a new page automatically."
+			style={{ fontFamily: 'Helvetica', fontSize: 10, marginBottom: 8 }}
+		/>
+		<Text
+			text="Use breakAfter when a block marks the end of a logical unit and you want a clean visual separation from whatever comes next — a title page, a summary, or a section divider."
+			style={{ fontFamily: 'Helvetica', fontSize: 10 }}
+		/>
+	</View>
+
+	<!-- Fixed footer -->
+	<View
+		fixed={true}
+		style={{ position: 'absolute', bottom: 20, left: 40, right: 40, flexDirection: 'row', justifyContent: 'space-between' }}
+	>
+		<Text
+			text="Acme Corp · Confidential"
+			style={{ fontFamily: 'Helvetica-Oblique', fontSize: 8, color: muted }}
+		/>
+		<Text
+			render={pageFooter}
+			style={{ fontFamily: 'Helvetica', fontSize: 8, color: muted }}
+		/>
+	</View>
+
+</Page>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<!-- Justified Text page                                                    -->
+<!--                                                                        -->
+<!-- Demonstrates textAlign: 'justify'.  Wrapped lines are stretched to the -->
+<!-- full content width by distributing slack across word gaps; the final   -->
+<!-- line of each paragraph keeps its natural width.                        -->
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<Page size="A4" style={{ padding: 40 }}>
+
+	<!-- Title -->
+	<Text
+		text="Justified Text"
+		style={{ fontFamily: 'Helvetica-Bold', fontSize: 20, color: brand, marginBottom: 4 }}
+	/>
+	<Text
+		text="Stretch lines flush to both margins with the textAlign: 'justify' style prop on any <Text> node."
+		style={{ fontFamily: 'Helvetica-Oblique', fontSize: 9, color: muted, marginBottom: 20 }}
+	/>
+
+	<!-- What it does -->
+	<Text
+		text="How it works"
+		style={{ fontFamily: 'Helvetica-Bold', fontSize: 11, color: brand, marginBottom: 6 }}
+	/>
+	<Text
+		text="svelte-pdf wraps the text, measures each line, then distributes the leftover horizontal space evenly across that line's word gaps so it reaches the right margin. The last line of every paragraph is left at its natural width — exactly as a typesetter would set it — and single-word lines are never stretched."
+		style={{ fontFamily: 'Helvetica', fontSize: 10, marginBottom: 16 }}
+	/>
+
+	<!-- Style prop reference -->
+	<View style={{ backgroundColor: subtle, padding: 12, borderRadius: 4, marginBottom: 20 }}>
+		<Text
+			text={"<Text style={{ textAlign: 'justify' }}>…</Text>"}
+			style={{ fontFamily: 'Courier', fontSize: 9, color: brand, marginBottom: 8 }}
+		/>
+		<Text
+			text="Works across page breaks too: when a justified paragraph splits, each page's lines stay correctly justified."
+			style={{ fontFamily: 'Helvetica-Oblique', fontSize: 8, color: muted }}
+		/>
+	</View>
+
+	<!-- Side-by-side comparison -->
+	<Text
+		text="Left-aligned vs justified — same paragraph"
+		style={{ fontFamily: 'Helvetica-Bold', fontSize: 11, color: brand, marginBottom: 4 }}
+	/>
+	<Text
+		text="Notice the ragged right edge on the left and the flush right edge on the right (every line but the last)."
+		style={{ fontFamily: 'Helvetica-Oblique', fontSize: 9, color: muted, marginBottom: 10 }}
+	/>
+	<View style={{ flexDirection: 'row', gap: 12, marginBottom: 20 }}>
+
+		<!-- Left: default left alignment -->
+		<View style={{ flexGrow: 1, flexShrink: 1, flexBasis: 0, borderWidth: 1, borderColor: border, borderRadius: 4, padding: 8 }}>
+			<Text
+				text="textAlign: 'left' (default)"
+				style={{ fontFamily: 'Helvetica-Bold', fontSize: 8, color: muted, marginBottom: 6 }}
+			/>
+			<Text
+				text="The quick brown fox jumps over the lazy dog while the typesetter measures every word and leaves the right edge ragged, as ordinary left-aligned prose naturally falls."
+				style={{ fontFamily: 'Helvetica', fontSize: 10, textAlign: 'left', lineHeight: 1.35 }}
+			/>
+		</View>
+
+		<!-- Right: justified -->
+		<View style={{ flexGrow: 1, flexShrink: 1, flexBasis: 0, borderWidth: 1, borderColor: '#93c5fd', borderRadius: 4, padding: 8 }}>
+			<Text
+				text="textAlign: 'justify'"
+				style={{ fontFamily: 'Helvetica-Bold', fontSize: 8, color: brand, marginBottom: 6 }}
+			/>
+			<Text
+				text="The quick brown fox jumps over the lazy dog while the typesetter measures every word and leaves the right edge ragged, as ordinary left-aligned prose naturally falls."
+				style={{ fontFamily: 'Helvetica', fontSize: 10, textAlign: 'justify', lineHeight: 1.35 }}
+			/>
+		</View>
+
+	</View>
+
+	<!-- Full-width justified block -->
+	<Text
+		text="Full-width justified paragraph"
+		style={{ fontFamily: 'Helvetica-Bold', fontSize: 11, color: brand, marginBottom: 6 }}
+	/>
+	<Text
+		text="Justification shines in dense, column-width body copy such as terms and conditions, legal clauses, or article text. Each line below is stretched to the page margins by widening the spaces between words just enough to fill the available measure, producing the clean rectangular block of text associated with professional print typography. The final line, having nothing to align against, simply ends wherever the words run out."
+		style={{ fontFamily: 'Helvetica', fontSize: 10, textAlign: 'justify', lineHeight: 1.4 }}
+	/>
+
+	<!-- Fixed footer -->
+	<View
+		fixed={true}
+		style={{ position: 'absolute', bottom: 20, left: 40, right: 40, flexDirection: 'row', justifyContent: 'space-between' }}
+	>
+		<Text
+			text="Acme Corp · Confidential"
+			style={{ fontFamily: 'Helvetica-Oblique', fontSize: 8, color: muted }}
+		/>
+		<Text
+			render={pageFooter}
+			style={{ fontFamily: 'Helvetica', fontSize: 8, color: muted }}
+		/>
+	</View>
+
+</Page>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<!-- Keep-With-Next page                                                    -->
+<!--                                                                        -->
+<!-- Demonstrates the keepWithNext prop.  A node marked keepWithNext is kept -->
+<!-- on the same page as the start of its following sibling — preventing a   -->
+<!-- heading from being stranded at the bottom of a page, away from its body.-->
+<!--                                                                        -->
+<!-- Live demo: a spacer pushes a heading + body pair near the page boundary -->
+<!-- so the body would start past it.  The heading carries keepWithNext, so   -->
+<!-- the paginator pulls the heading onto the next page to keep it with the   -->
+<!-- body, rather than stranding it at the foot of this page.                 -->
+<!--                                                                          -->
+<!-- (A side-by-side "with vs without" comparison isn't possible here: a page -->
+<!-- break is horizontal across the whole page, so pulling the break up would -->
+<!-- move both columns.  The contrast is described in text instead.)          -->
+<!--                                                                          -->
+<!-- The spacer height is tuned so the body starts just past the boundary;    -->
+<!-- adjust it if the surrounding content above changes.                      -->
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<Page size="A4" style={{ padding: 40 }}>
+
+	<!-- Title -->
+	<Text
+		text="Keep With Next"
+		style={{ fontFamily: 'Helvetica-Bold', fontSize: 20, color: brand, marginBottom: 4 }}
+	/>
+	<Text
+		text="Keep a heading on the same page as the content it introduces with the keepWithNext prop."
+		style={{ fontFamily: 'Helvetica-Oblique', fontSize: 9, color: muted, marginBottom: 20 }}
+	/>
+
+	<!-- What it does -->
+	<Text
+		text="What it does"
+		style={{ fontFamily: 'Helvetica-Bold', fontSize: 11, color: brand, marginBottom: 6 }}
+	/>
+	<Text
+		text="A node marked keepWithNext must appear on the same page as the start of its following sibling. If the natural page break would separate the two, the paginator moves the marked node to the next page so they travel together — eliminating the classic 'orphaned heading' stranded at the foot of a page."
+		style={{ fontFamily: 'Helvetica', fontSize: 10, marginBottom: 16 }}
+	/>
+
+	<!-- Prop reference -->
+	<View style={{ backgroundColor: subtle, padding: 12, borderRadius: 4, marginBottom: 16 }}>
+		<Text
+			text={'<Text keepWithNext>Section 3: Results</Text>'}
+			style={{ fontFamily: 'Courier', fontSize: 9, color: brand, marginBottom: 4 }}
+		/>
+		<Text
+			text={'<View>…body of the section…</View>'}
+			style={{ fontFamily: 'Courier', fontSize: 9, color: brand, marginBottom: 8 }}
+		/>
+		<Text
+			text="Supported on View, Text, and Image. If the pair is taller than a whole page, the break is allowed (the constraint cannot be satisfied)."
+			style={{ fontFamily: 'Helvetica-Oblique', fontSize: 8, color: muted }}
+		/>
+	</View>
+
+	<!-- Live demo intro -->
+	<Text
+		text="Live demo — heading pulled to stay with its body"
+		style={{ fontFamily: 'Helvetica-Bold', fontSize: 11, color: brand, marginBottom: 4 }}
+	/>
+	<Text
+		text="The spacer below pushes the green heading to the very bottom of this page, where its body no longer fits. Because the heading is marked keepWithNext, the paginator moves it to the top of the next page so it stays directly above its body. Without keepWithNext the heading would remain stranded here, alone at the foot of the page."
+		style={{ fontFamily: 'Helvetica-Oblique', fontSize: 9, color: muted, marginBottom: 8 }}
+	/>
+
+	<!--
+		Spacer: pushes the heading down so its body would start just past the page
+		boundary (≈797pt).  Tuned against the content above; adjust if that
+		content changes (raise to push lower, lower to pull up).
+	-->
+	<View style={{ height: 482 }} />
+
+	<!-- Heading marked keepWithNext, immediately followed by its body sibling. -->
+	<Text
+		text="Section 3: Results  (keepWithNext)"
+		keepWithNext={true}
+		style={{ fontFamily: 'Helvetica-Bold', fontSize: 13, color: '#16a34a', marginBottom: 6 }}
+	/>
+	<View style={{ borderWidth: 1, borderColor: '#86efac', borderRadius: 4, padding: 10 }}>
+		<Text
+			text="This body is the heading's following sibling. Because the heading carries keepWithNext, the paginator detected that the body would not fit beneath it on the previous page and pulled the heading forward — so this block opens cleanly with its heading at the top of a fresh page, never separated by the break."
+			style={{ fontFamily: 'Helvetica', fontSize: 10, lineHeight: 1.35 }}
+		/>
+	</View>
 
 	<!-- Fixed footer -->
 	<View

@@ -5,10 +5,14 @@
 
 	const {
 		src,
-		style = {}
+		style = {},
+		breakBefore = false,
+		breakAfter = false
 	}: {
 		src: string;
 		style?: StyleProps;
+		breakBefore?: boolean;
+		breakAfter?: boolean;
 	} = $props();
 
 	const parent = getContext<PDFNode>('__pdf__');
@@ -16,6 +20,6 @@
 
 	if (!src) warn('<Image> is missing a required `src` prop — no image will be rendered.');
 
-	parent.children.push({ type: 'image', props: { src, style }, children: [] });
+	parent.children.push({ type: 'image', props: { src, style, breakBefore, breakAfter }, children: [] });
 	root.resources.push({ type: 'image', src });
 </script>

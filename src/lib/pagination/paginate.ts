@@ -130,35 +130,41 @@ function paginatePage(page: PDFNode): PDFNode[] {
 	const contentEnd    = pageHeight - padBottom;   // last y available on page 0
 	const contentHeight = contentEnd - padTop;      // usable band on pages 1+
 
-	// Fast path: all content fits within the padding-respecting boundary.
+	// Sorted y-positions where a forced page break must occur (breakBefore /
+	// breakAfter props on flow nodes).  These shrink the natural slot boundaries
+	// so that content on either side of a break lands on separate pages.
+	const forcedBreaks = collectForcedBreaks(page);
+
+	// Fast path: all content fits within the padding-respecting boundary and
+	// there are no forced breaks that would split the page.
 	const contentBottom = getContentBottom(page);
-	if (padTop === 0 && contentBottom <= contentEnd) {
+	if (padTop === 0 && contentBottom <= contentEnd && forcedBreaks.length === 0) {
 		return [page];
 	}
 
 	const outputPages: PDFNode[] = [];
-	let pageIndex = 0;
 
 	// Tracks how many lines of each text node have already been placed on
 	// previous pages.  Shared across all page slots so widow/orphan adjustments
 	// from one page are reflected accurately on the next.
 	const nodeProgress = new Map<PDFNode, number>();
 
-	while (true) {
-		// Page 0 uses the full Yoga-computed band [0, contentEnd).
-		// Pages 1+ use [contentEnd + (N-1)*contentHeight, contentEnd + N*contentHeight).
-		const yStart = pageIndex === 0
-			? 0
-			: contentEnd + (pageIndex - 1) * contentHeight;
-		const yEnd = pageIndex === 0
-			? contentEnd
-			: yStart + contentHeight;
-		// On page 0, Yoga already placed content at y=padTop — no adjustment needed.
-		// On overflow pages, shift content down by padTop so it lands in the
-		// correct position on the new page.
-		const yOffset = pageIndex === 0 ? 0 : padTop;
+	let yStart = 0;
+	let pageIndex = 0;
 
-		if (yStart >= contentBottom) break;
+	while (yStart < contentBottom) {
+		// Natural slot boundary: page 0 ends at contentEnd; every subsequent page
+		// spans exactly contentHeight from wherever yStart currently sits.
+		const yEnd_natural = pageIndex === 0 ? contentEnd : yStart + contentHeight;
+
+		// Shrink the slot to the first forced break that falls strictly inside it.
+		const forcedBreak = forcedBreaks.find((b) => b > yStart && b < yEnd_natural);
+		const yEnd = forcedBreak ?? yEnd_natural;
+
+		// On page 0, Yoga already placed content at y=padTop — no adjustment needed.
+		// On overflow pages (including those after a forced break), shift content
+		// down by padTop so it lands in the correct padded position on the new page.
+		const yOffset = pageIndex === 0 ? 0 : padTop;
 
 		const slicedChildren = page.children
 			.filter((c) => !c.props.fixed)
@@ -178,6 +184,7 @@ function paginatePage(page: PDFNode): PDFNode[] {
 			});
 		}
 
+		yStart = yEnd;
 		pageIndex++;
 	}
 
@@ -366,6 +373,29 @@ function getContentBottom(node: PDFNode): number {
 	}
 	walk(node);
 	return max;
+}
+
+/**
+ * Collects sorted forced-break y-positions from breakBefore / breakAfter props.
+ *
+ * - breakBefore on a node inserts a break at the node's top edge (layout.y).
+ * - breakAfter on a node inserts a break at the node's bottom edge (layout.y + height).
+ *
+ * Fixed nodes are excluded — they do not participate in flow pagination.
+ * Duplicate positions are removed and the result is sorted ascending.
+ */
+function collectForcedBreaks(page: PDFNode): number[] {
+	const breaks = new Set<number>();
+	function walk(node: PDFNode): void {
+		if (node.props.fixed) return;
+		if (node.layout) {
+			if (node.props.breakBefore) breaks.add(node.layout.y);
+			if (node.props.breakAfter)  breaks.add(node.layout.y + node.layout.height);
+		}
+		for (const child of node.children) walk(child);
+	}
+	for (const child of page.children) walk(child);
+	return [...breaks].sort((a, b) => a - b);
 }
 
 /**

@@ -8,7 +8,9 @@
 		text: textProp,
 		style = {},
 		children,
-		render: renderFn
+		render: renderFn,
+		breakBefore = false,
+		breakAfter = false
 	}: {
 		/** Explicit text string. Use either this, children, or render — not multiple. */
 		text?: string;
@@ -24,6 +26,8 @@
 		 *   <Text render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} />
 		 */
 		render?: PageNumberRenderer;
+		breakBefore?: boolean;
+		breakAfter?: boolean;
 	} = $props();
 
 	const parent = getContext<PDFNode>('__pdf__');
@@ -37,7 +41,7 @@
 		// Render-prop text: no static text at build time.
 		// The actual string is produced at draw time by drawText().
 		// Yoga measures with placeholder values (0, 0) to estimate space.
-		parent.children.push({ type: 'text', props: { render: renderFn, style }, children: [] });
+		parent.children.push({ type: 'text', props: { render: renderFn, style, breakBefore, breakAfter }, children: [] });
 	} else {
 		let resolvedText = textProp != null ? String(textProp) : '';
 
@@ -61,6 +65,6 @@
 				.trim();
 		}
 
-		parent.children.push({ type: 'text', props: { text: resolvedText, style }, children: [] });
+		parent.children.push({ type: 'text', props: { text: resolvedText, style, breakBefore, breakAfter }, children: [] });
 	}
 </script>

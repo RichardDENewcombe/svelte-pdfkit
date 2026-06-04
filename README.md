@@ -92,8 +92,13 @@ Create a file ending in `.pdf.svelte`. Use the provided components to build the 
 
 ### 2. Render from a SvelteKit route
 
+`render()` returns a Node.js `Readable`. The `toResponse()` helper wraps it in a
+Web `Response` — converting the stream and defaulting `Content-Type` to
+`application/pdf` — so it works on **any** SvelteKit adapter without buffering:
+
 ```ts
 // src/routes/report/+server.ts
+import { toResponse } from "svelte-pdf";
 import { render } from "$lib/Report.pdf.svelte";
 
 export async function GET() {
@@ -102,11 +107,38 @@ export async function GET() {
     items: ["Revenue: $1M", "Users: 50k"],
   });
 
-  return new Response(pdf as unknown as ReadableStream, {
-    headers: { "Content-Type": "application/pdf" },
-  });
+  return toResponse(pdf);
 }
 ```
+
+Pass a second `ResponseInit` argument to set a status, force a download, or add
+headers (`Content-Type` still defaults to `application/pdf` unless you override it):
+
+```ts
+return toResponse(pdf, {
+  headers: { "Content-Disposition": 'attachment; filename="report.pdf"' },
+});
+```
+
+<details>
+<summary>Doing it manually without <code>toResponse</code></summary>
+
+`render()` returns a Node.js `Readable`, which the Web `Response` constructor
+does not accept by type. Convert it to a Web stream:
+
+```ts
+import { Readable } from "node:stream";
+
+return new Response(Readable.toWeb(pdf) as ReadableStream, {
+  headers: { "Content-Type": "application/pdf" },
+});
+```
+
+On `adapter-node` only, you may instead pass the Node stream directly with a
+cast (`new Response(pdf as unknown as BodyInit, …)`), but that is not portable
+to other adapters. `toResponse()` does the `Readable.toWeb` conversion for you.
+
+</details>
 
 ### 3. Write to a file (Node.js)
 
@@ -575,7 +607,69 @@ const pdf = await renderComponent(MyDocument, { title: "Hello" });
 pdf.pipe(fs.createWriteStream("output.pdf"));
 ```
 
-`renderComponent` runs the full pipeline: AST build → resource loading → Yoga layout → pagination → PDFKit stream.
+`renderComponent` runs the full pipeline: AST build → resource loading → Yoga layout → pagination → PDFKit stream. Its return value is the same Node.js `Readable` as `render()`, so `toResponse(pdf)` works here too.
+
+---
+
+## API reference
+
+Everything below is exported from the package root (`svelte-pdf`) unless a
+different import path is noted.
+
+### Components
+
+```ts
+import { Document, Page, View, Text, Image, Font, Link, Canvas } from "svelte-pdf";
+```
+
+| Group | Components |
+| ----- | ---------- |
+| Layout & content | `Document`, `Page`, `View`, `Text`, `Image`, `Font`, `Link`, `Canvas` |
+| SVG | `Svg`, `Path`, `Circle`, `Rect`, `Ellipse`, `Line`, `G`, `Polyline`, `Polygon`, `Defs`, `LinearGradient`, `RadialGradient`, `Stop`, `ClipPath`, `SvgText`, `Tspan` |
+| Table | `Table`, `Row`, `Cell` |
+
+See [Components](#components) and [SVG components](#svg-components) for props.
+
+### Runtime functions
+
+```ts
+import { renderComponent, toResponse } from "svelte-pdf";
+```
+
+| Function | Signature | Description |
+| -------- | --------- | ----------- |
+| `renderComponent` | `(Component, props?) => Promise<Readable>` | Render a plain `.svelte` component to a PDF stream (no Vite plugin needed). |
+| `toResponse` | `(pdf: Readable, init?: ResponseInit) => Response` | Wrap a PDF stream in a Web `Response`; defaults `Content-Type` to `application/pdf`. |
+| `createDocument` | `() => DocumentContext` | Low-level: create a fresh document context. |
+| `createNode` | `(type: NodeType, props?) => PDFNode` | Low-level: construct an AST node. |
+| `resolveFont` | `(family: string, weight?: string, style?: string) => string` | Low-level: resolve a registered PDFKit font-variant name. |
+
+### Types
+
+```ts
+import type { StyleProps, PageNumberRenderer } from "svelte-pdf";
+```
+
+`PDFNode`, `DocumentContext`, `StyleProps`, `NodeType`, `LayoutBox`,
+`ResourceEntry`, `PDFMetadata`, `PageRenderProps`, `PageNumberRenderer`.
+
+### Compiled templates
+
+Each `.pdf.svelte` file, processed by the Vite plugin, exports:
+
+| Export | Signature | Description |
+| ------ | --------- | ----------- |
+| `render` | `(props?) => Promise<Readable>` | Render this template to a PDF stream. |
+
+### Vite plugin
+
+```ts
+import { sveltePDF } from "svelte-pdf/compiler/vite-plugin";
+```
+
+| Export | Signature | Description |
+| ------ | --------- | ----------- |
+| `sveltePDF` | `() => Plugin` | Vite plugin that compiles `.pdf.svelte` templates into `render()` modules. |
 
 ---
 

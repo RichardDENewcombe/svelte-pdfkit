@@ -26,6 +26,29 @@ pdf.pipe(fs.createWriteStream("invoice.pdf"));
 
 ---
 
+## Contents
+
+- [Installation](#installation)
+- [Vite / SvelteKit setup](#vite--sveltekit-setup)
+- [Quick start](#quick-start)
+- [Components](#components)
+  - [SVG components](#svg-components)
+  - [Table components](#table-components)
+- [Style reference](#style-reference)
+- [Fixed elements (headers and footers)](#fixed-elements-headers-and-footers)
+- [Page breaks and flow control](#page-breaks-and-flow-control)
+  - [Explicit page breaks](#explicit-page-breaks)
+  - [Keep with next](#keep-with-next)
+  - [Orphans and widows](#orphans-and-widows)
+  - [Justified text](#justified-text)
+- [Using `renderComponent` directly](#using-rendercomponent-directly)
+- [API reference](#api-reference)
+- [How it works](#how-it-works)
+- [TypeScript](#typescript)
+- [Limitations](#limitations)
+
+---
+
 ## Installation
 
 ```bash
@@ -204,10 +227,15 @@ A box container. The primary layout primitive — equivalent to a `<div>`.
 </View>
 ```
 
-| Prop    | Type         | Description                                    |
-| ------- | ------------ | ---------------------------------------------- |
-| `style` | `StyleProps` | Layout and visual styles                       |
-| `fixed` | `boolean`    | Repeat on every page (use for headers/footers) |
+| Prop           | Type         | Default | Description                                            |
+| -------------- | ------------ | ------- | ------------------------------------------------------ |
+| `style`        | `StyleProps` | `{}`    | Layout and visual styles                               |
+| `fixed`        | `boolean`    | `false` | Repeat on every page (use for headers/footers)         |
+| `breakBefore`  | `boolean`    | `false` | Force a page break before this view                    |
+| `breakAfter`   | `boolean`    | `false` | Force a page break after this view                     |
+| `keepWithNext` | `boolean`    | `false` | Keep on the same page as the start of the next sibling |
+
+`breakBefore`, `breakAfter`, and `keepWithNext` are explained in [Page breaks and flow control](#page-breaks-and-flow-control).
 
 ---
 
@@ -226,14 +254,17 @@ Renders text. Supports word wrapping, alignment, and dynamic page numbers.
 <Text render={({ pageNumber, totalPages }) => `Page ${pageNumber} of ${totalPages}`} />
 ```
 
-| Prop       | Type                                 | Description                     |
-| ---------- | ------------------------------------ | ------------------------------- |
-| `text`     | `string`                             | Static text content             |
-| `children` | `Snippet`                            | Text as Svelte children         |
-| `render`   | `(props: PageRenderProps) => string` | Dynamic text (for page numbers) |
-| `style`    | `StyleProps`                         | Text and layout styles          |
+| Prop           | Type                                 | Description                                            |
+| -------------- | ------------------------------------ | ------------------------------------------------------ |
+| `text`         | `string`                             | Static text content                                    |
+| `children`     | `Snippet`                            | Text as Svelte children                                |
+| `render`       | `(props: PageRenderProps) => string` | Dynamic text (for page numbers)                        |
+| `style`        | `StyleProps`                         | Text and layout styles                                 |
+| `breakBefore`  | `boolean`                            | Force a page break before this text                    |
+| `breakAfter`   | `boolean`                            | Force a page break after this text                     |
+| `keepWithNext` | `boolean`                            | Keep on the same page as the start of the next sibling |
 
-Use `text`, `children`, or `render` — not multiple at once.
+Use `text`, `children`, or `render` — not multiple at once. See [Page breaks and flow control](#page-breaks-and-flow-control) for `breakBefore` / `breakAfter` / `keepWithNext`, and the [Typography](#typography) styles for `textAlign: 'justify'`, `orphans`, and `widows`.
 
 ---
 
@@ -246,10 +277,13 @@ Renders a PNG or JPEG image. Supports local files, base64 data URIs, and remote 
 <Image src="https://example.com/photo.jpg" style={{ width: 200, height: 150 }} />
 ```
 
-| Prop    | Type         | Description                        |
-| ------- | ------------ | ---------------------------------- |
-| `src`   | `string`     | File path, URL, or base64 data URI |
-| `style` | `StyleProps` | Width, height, and layout          |
+| Prop           | Type         | Description                                            |
+| -------------- | ------------ | ------------------------------------------------------ |
+| `src`          | `string`     | File path, URL, or base64 data URI                     |
+| `style`        | `StyleProps` | Width, height, and layout                              |
+| `breakBefore`  | `boolean`    | Force a page break before this image                   |
+| `breakAfter`   | `boolean`    | Force a page break after this image                    |
+| `keepWithNext` | `boolean`    | Keep on the same page as the start of the next sibling |
 
 ---
 
@@ -557,6 +591,10 @@ All layout components accept a `style` prop typed as `StyleProps`.
 | `lineHeight`     | number (multiplier, e.g. `1.5`)           |
 | `letterSpacing`  | number (points)                           |
 | `textDecoration` | `'none'` `'underline'` `'line-through'`   |
+| `orphans`        | number (min lines at page bottom, default `1`) |
+| `widows`         | number (min lines at page top, default `1`)    |
+
+`textAlign: 'justify'`, `orphans`, and `widows` are described under [Page breaks and flow control](#page-breaks-and-flow-control).
 
 ### Visual
 
@@ -592,6 +630,54 @@ Set `fixed={true}` on a `<View>` to repeat it on every page. Combined with `posi
 ```
 
 The paginator detects fixed elements and automatically reserves clearance above them so flow content is never obscured.
+
+---
+
+## Page breaks and flow control
+
+Content that overflows a `<Page>` automatically flows onto new pages — long `<Text>` blocks are split line-by-line at the boundary, while views, tables, and images flow as units. The props and styles below give precise control over where those breaks fall.
+
+### Explicit page breaks
+
+`breakBefore` forces a new page before a node; `breakAfter` forces one after it. Both are available on `<View>`, `<Text>`, and `<Image>`, regardless of how much space remains on the current page.
+
+```svelte
+<View breakBefore>Starts at the top of a new page</View>
+
+<View breakAfter>Everything after this starts on a new page</View>
+```
+
+### Keep with next
+
+`keepWithNext` keeps a node on the same page as the **start of its following sibling** — typically to stop a heading from being stranded at the foot of a page, away from the content it introduces. If the page break would separate the pair, the marked node is moved to the next page so they stay together.
+
+```svelte
+<Text text="Section 3: Results" keepWithNext style={{ fontFamily: 'Helvetica-Bold' }} />
+<View>The body that should stay with its heading…</View>
+```
+
+If the pair is taller than a whole page the break is allowed (the constraint cannot be satisfied). Available on `<View>`, `<Text>`, and `<Image>`.
+
+### Orphans and widows
+
+Set these on a `<Text>` style to limit isolated lines at a page boundary. An _orphan_ is the first line of a block left at the bottom of a page; a _widow_ is the last line carried alone to the top of the next. Both default to `1` (disabled); set to `2` or more to activate.
+
+```svelte
+<Text text={longParagraph} style={{ orphans: 2, widows: 2 }} />
+```
+
+| Style prop | Type     | Default | Description                                    |
+| ---------- | -------- | ------- | ---------------------------------------------- |
+| `orphans`  | `number` | `1`     | Minimum lines kept at the bottom of a page     |
+| `widows`   | `number` | `1`     | Minimum lines kept at the top of the next page |
+
+### Justified text
+
+`textAlign: 'justify'` stretches each wrapped line to the full content width by distributing the slack across its word gaps. The last line of every paragraph keeps its natural width, and justification is preserved when a paragraph splits across pages.
+
+```svelte
+<Text text={paragraph} style={{ textAlign: 'justify' }} />
+```
 
 ---
 

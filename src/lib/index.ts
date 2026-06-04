@@ -31,6 +31,7 @@ export { default as Cell } from './components/Table/Cell.svelte';
 export { createDocument } from './runtime/document.js';
 export { createNode } from './runtime/node.js';
 export { renderComponent } from './runtime/render.js';
+export { toResponse } from './runtime/to-response.js';
 export { resolveFont } from './runtime/font-registry.js';
 
 // ── Types ─────────────────────────────────────────────────────────────────────

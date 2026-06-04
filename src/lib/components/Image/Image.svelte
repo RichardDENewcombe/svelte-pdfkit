@@ -7,12 +7,15 @@
 		src,
 		style = {},
 		breakBefore = false,
-		breakAfter = false
+		breakAfter = false,
+		keepWithNext = false
 	}: {
 		src: string;
 		style?: StyleProps;
 		breakBefore?: boolean;
 		breakAfter?: boolean;
+		/** Keep this image on the same page as the start of its next sibling. */
+		keepWithNext?: boolean;
 	} = $props();
 
 	const parent = getContext<PDFNode>('__pdf__');
@@ -20,6 +23,6 @@
 
 	if (!src) warn('<Image> is missing a required `src` prop — no image will be rendered.');
 
-	parent.children.push({ type: 'image', props: { src, style, breakBefore, breakAfter }, children: [] });
+	parent.children.push({ type: 'image', props: { src, style, breakBefore, breakAfter, keepWithNext }, children: [] });
 	root.resources.push({ type: 'image', src });
 </script>

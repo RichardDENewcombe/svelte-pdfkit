@@ -135,8 +135,13 @@ function paginatePage(page: PDFNode): PDFNode[] {
 	// so that content on either side of a break lands on separate pages.
 	const forcedBreaks = collectForcedBreaks(page);
 
+	// keep-with-next pairs: a node that must stay on the same page as the start
+	// of its following sibling (e.g. a heading kept with its body text).
+	const keepPairs = collectKeepWithNext(page);
+
 	// Fast path: all content fits within the padding-respecting boundary and
-	// there are no forced breaks that would split the page.
+	// there are no forced breaks that would split the page.  keepPairs cannot
+	// matter here because nothing is being split.
 	const contentBottom = getContentBottom(page);
 	if (padTop === 0 && contentBottom <= contentEnd && forcedBreaks.length === 0) {
 		return [page];
@@ -159,7 +164,23 @@ function paginatePage(page: PDFNode): PDFNode[] {
 
 		// Shrink the slot to the first forced break that falls strictly inside it.
 		const forcedBreak = forcedBreaks.find((b) => b > yStart && b < yEnd_natural);
-		const yEnd = forcedBreak ?? yEnd_natural;
+		let yEnd = forcedBreak ?? yEnd_natural;
+
+		// keep-with-next: if the boundary would separate a kept node from the
+		// start of its successor, pull the break up to the kept node's top so
+		// both move to the next page together.  A pair is violated when the kept
+		// node (aTop) starts before the boundary but its successor (bTop) starts
+		// at or after it.  We only pull the break to aTop when aTop > yStart so we
+		// still make forward progress — if the kept node is already at the top of
+		// the page and its successor still doesn't fit, the pair is taller than a
+		// page and we let it break normally.  Looping handles chains (A→B→C) and
+		// pairs newly exposed as the boundary moves up; yEnd strictly decreases
+		// each pass and is bounded below by yStart, so it always terminates.
+		let pulled = findKeepWithNextBreak(keepPairs, yStart, yEnd);
+		while (pulled !== null) {
+			yEnd = pulled;
+			pulled = findKeepWithNextBreak(keepPairs, yStart, yEnd);
+		}
 
 		// On page 0, Yoga already placed content at y=padTop — no adjustment needed.
 		// On overflow pages (including those after a forced break), shift content
@@ -407,6 +428,64 @@ function collectForcedBreaks(page: PDFNode): number[] {
 	}
 	for (const child of page.children) walk(child);
 	return [...breaks].sort((a, b) => a - b);
+}
+
+/** A keep-with-next constraint: the kept node's top and its successor's top. */
+interface KeepPair {
+	/** Top edge (Yoga y) of the node carrying keepWithNext. */
+	aTop: number;
+	/** Top edge (Yoga y) of that node's following flow sibling. */
+	bTop: number;
+}
+
+/**
+ * Collects keep-with-next pairs from the page tree.
+ *
+ * For each flow node with `keepWithNext`, the pair's successor is the node's
+ * next non-fixed sibling — the element it must stay with.  A node with no such
+ * sibling (last child, or only fixed siblings after it) contributes no pair.
+ *
+ * Tops are taken in the original Yoga coordinate space, matching the values the
+ * slot loop compares against.
+ */
+function collectKeepWithNext(page: PDFNode): KeepPair[] {
+	const pairs: KeepPair[] = [];
+	function walk(node: PDFNode): void {
+		if (node.props.fixed) return;
+		const flowChildren = node.children.filter((c) => !c.props.fixed);
+		for (let i = 0; i < flowChildren.length; i++) {
+			const child = flowChildren[i];
+			if (child.props.keepWithNext && child.layout) {
+				const next = flowChildren[i + 1];
+				if (next?.layout) {
+					pairs.push({ aTop: child.layout.y, bTop: next.layout.y });
+				}
+			}
+			walk(child);
+		}
+	}
+	walk(page);
+	return pairs;
+}
+
+/**
+ * Returns the smallest kept-node top that the current slot boundary would
+ * separate from its successor, or null if no pair is violated.
+ *
+ * A pair (aTop, bTop) is violated when the kept node starts within this slot
+ * (aTop > yStart, so pulling the break to aTop still advances) but before the
+ * boundary (aTop < yEnd) while its successor lands at or beyond the boundary
+ * (bTop >= yEnd).  Breaking at the smallest such aTop moves the kept node and
+ * everything after it to the next page.
+ */
+function findKeepWithNextBreak(pairs: KeepPair[], yStart: number, yEnd: number): number | null {
+	let pulled: number | null = null;
+	for (const { aTop, bTop } of pairs) {
+		if (aTop > yStart && aTop < yEnd && bTop >= yEnd) {
+			if (pulled === null || aTop < pulled) pulled = aTop;
+		}
+	}
+	return pulled;
 }
 
 /**

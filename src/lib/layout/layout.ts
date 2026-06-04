@@ -2,6 +2,14 @@ import Yoga, { FlexDirection, Edge, Align, Justify, Direction, Gutter, PositionT
 import type { DocumentContext, LayoutBox, PDFNode } from '../types/pdf.js';
 import { measureText } from './text-measure.js';
 
+// Disable Yoga's pixel-grid rounding so measure callbacks receive and return
+// exact float values.  The default pointScaleFactor of 1 causes Yoga to snap
+// text-node heights upward via forceCeil, producing values like 15 for a
+// PDFKit lineHeight of 13.872.  Setting it to 0 matches react-pdf's approach
+// (packages/layout/src/yoga/index.ts) and eliminates the discrepancy.
+const yogaConfig = Yoga.Config.create();
+yogaConfig.setPointScaleFactor(0);
+
 // ── Layout cache ──────────────────────────────────────────────────────────────
 //
 // Keyed by a hash of the page tree (structure + styles + text content) combined
@@ -201,7 +209,7 @@ function applyStyle(yogaNode: any, node: PDFNode): void {
 }
 
 function buildYogaTree(node: PDFNode): any {
-	const yogaNode = Yoga.Node.create();
+	const yogaNode = Yoga.Node.createWithConfig(yogaConfig);
 	applyStyle(yogaNode, node);
 	// svg nodes are Yoga leaves — their children are SVG elements, not Yoga nodes.
 	if (node.type !== 'svg') {

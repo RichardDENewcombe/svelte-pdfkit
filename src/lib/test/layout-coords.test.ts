@@ -63,7 +63,7 @@ describe('layout coordinates – BasicPDF', () => {
 		expect(text2.layout!.width).toBe(515);
 	});
 
-	it('text node heights are proportional to font size and within 2pt of PDFKit line height', () => {
+	it('text node heights match PDFKit line heights exactly', () => {
 		const doc = buildAndLayout(BasicPDF);
 		const view  = doc.children[0].children[0];
 		const text1 = view.children[0]; // "Hello, svelte-pdf!" fontSize: 24
@@ -72,28 +72,21 @@ describe('layout coordinates – BasicPDF', () => {
 		const lh24 = getLineHeight({ fontSize: 24 });
 		const lh12 = getLineHeight({ fontSize: 12 });
 
-		// fontSize:24 must produce a taller node than fontSize:12.
-		expect(text1.layout!.height).toBeGreaterThan(text2.layout!.height);
-
-		// Yoga rounds measure-callback results to its internal grid; allow 2pt.
-		expect(text1.layout!.height).toBeGreaterThan(lh24 - 2);
-		expect(text1.layout!.height).toBeLessThan(lh24 + 2);
-
-		expect(text2.layout!.height).toBeGreaterThan(lh12 - 2);
-		expect(text2.layout!.height).toBeLessThan(lh12 + 2);
+		// With pointScaleFactor=0 Yoga returns the exact float from the measure
+		// callback, so the computed height must equal the PDFKit line height to
+		// within IEEE 754 float precision (< 0.001pt).
+		expect(text1.layout!.height).toBeCloseTo(lh24, 2);
+		expect(text2.layout!.height).toBeCloseTo(lh12, 2);
 	});
 
-	it('second text node follows immediately below first node with no gap', () => {
+	it('second text node y equals padding top plus first node height exactly', () => {
 		const doc = buildAndLayout(BasicPDF);
 		const view  = doc.children[0].children[0];
 		const text1 = view.children[0];
 		const text2 = view.children[1];
 
-		// Yoga's position and height rounding can diverge by up to 1pt.
-		// The key invariant is that text2 starts within 1pt of text1's bottom edge.
-		const gap = text2.layout!.y - (text1.layout!.y + text1.layout!.height);
-		expect(gap).toBeGreaterThanOrEqual(-1);
-		expect(gap).toBeLessThanOrEqual(1);
+		// With no pixel-grid rounding, position arithmetic is exact.
+		expect(text2.layout!.y).toBeCloseTo(40 + text1.layout!.height, 2);
 	});
 });
 

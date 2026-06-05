@@ -145,6 +145,20 @@ export type StyleProps = {
    * met. Default: 1 (disabled).
    */
   widows?: number;
+  /**
+   * Enables dictionary hyphenation for this text: words that overflow a line are
+   * broken at valid hyphenation points with a trailing `-`, instead of being
+   * pushed whole to the next line. Most visible with `textAlign: 'justify'`.
+   * Default: false.
+   */
+  hyphenation?: boolean;
+  /**
+   * Hyphenation language for this text when `hyphenation` is enabled. Bundled:
+   * `'en-gb'` (default) and `'en-us'`. Other languages require a callback
+   * registered via `registerHyphenationCallback`. Ignored when such a callback
+   * is set.
+   */
+  hyphenationLang?: string;
   /** Background fill colour for a View / Cell. */
   backgroundColor?: string;
   /** Width of the border stroke drawn around a View / Cell, in points. */

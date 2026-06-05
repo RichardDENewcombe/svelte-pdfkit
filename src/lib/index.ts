@@ -33,6 +33,12 @@ export { createNode } from './runtime/node.js';
 export { renderComponent } from './runtime/render.js';
 export { toResponse } from './runtime/to-response.js';
 export { resolveFont } from './runtime/font-registry.js';
+export {
+	registerHyphenationCallback,
+	setDefaultHyphenationLang,
+	hyphenateWord
+} from './layout/hyphenation.js';
+export type { HyphenationCallback } from './layout/hyphenation.js';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 export type {

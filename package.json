@@ -26,6 +26,9 @@
 		"svelte": "^5.0.0"
 	},
 	"dependencies": {
+		"hyphenation.en-gb": "^0.2.1",
+		"hyphenation.en-us": "^0.2.1",
+		"hypher": "^0.2.5",
 		"pdfkit": "^0.15.0",
 		"svg-to-pdfkit": "^0.1.8",
 		"yoga-layout": "^3.2.1"

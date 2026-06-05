@@ -5,6 +5,7 @@
 
 import { createRequire } from 'node:module';
 import { resolveFontStack } from '../runtime/font-registry.js';
+import { hyphenateWord } from './hyphenation.js';
 
 // pdfkit ships as CommonJS. In an ESM / Vite SSR context `require` is not
 // available as a global, but Node.js provides `createRequire` so we can get
@@ -86,8 +87,9 @@ export interface WrappedLine {
  * returning each line together with whether it ends its source paragraph.
  *
  * Splits on explicit newlines first, then applies greedy word-wrap within each
- * paragraph. Words wider than `maxWidth` are placed on their own line without
- * mid-word breaking (hyphenation is a future improvement).
+ * paragraph. When `style.hyphenation` is enabled, words that overflow are broken
+ * at dictionary hyphenation points with a trailing `-`; otherwise an overlong
+ * word is placed on its own line without mid-word breaking.
  *
  * The doc must already have the correct font and size set before calling this,
  * but that is guaranteed because `getLineHeight` is always called first in the
@@ -107,6 +109,9 @@ export function wrapLinesMeta(
 	const doc = getMeasureDoc();
 	applyMeasureFont(doc, style);
 
+	const hyphenate = style.hyphenation === true;
+	const lang = style.hyphenationLang as string | undefined;
+
 	const result: WrappedLine[] = [];
 
 	for (const paragraph of text.split('\n')) {
@@ -117,25 +122,7 @@ export function wrapLinesMeta(
 			continue;
 		}
 
-		const words = paragraph.split(' ');
-		let current = '';
-		const paraLines: string[] = [];
-
-		for (const word of words) {
-			if (!current) {
-				current = word;
-			} else {
-				const candidate = `${current} ${word}`;
-				if (doc.widthOfString(candidate) <= maxWidth) {
-					current = candidate;
-				} else {
-					paraLines.push(current);
-					current = word;
-				}
-			}
-		}
-
-		paraLines.push(current);
+		const paraLines = wrapParagraph(doc, paragraph, maxWidth, hyphenate, lang);
 
 		paraLines.forEach((line, i) => {
 			result.push({ text: line, lastInParagraph: i === paraLines.length - 1 });
@@ -143,6 +130,105 @@ export function wrapLinesMeta(
 	}
 
 	return result;
+}
+
+/** Hyphen inserted at a mid-word break. ASCII so every font has the glyph. */
+const HYPHEN = '-';
+
+/**
+ * Finds the longest leading prefix of `word`'s hyphenation parts that fits —
+ * with a trailing hyphen — within `avail` points. Returns the `head` (without
+ * the hyphen, which the caller appends) and the remaining `tail`, or `null` if
+ * no usable break exists.
+ */
+function breakWordToFit(
+	doc: any,
+	word: string,
+	avail: number,
+	lang: string | undefined
+): { head: string; tail: string } | null {
+	const parts = hyphenateWord(word, lang);
+	if (parts.length < 2) return null;
+
+	let best: { head: string; tail: string } | null = null;
+	let acc = '';
+	// Stop before the last part so the tail is never empty.
+	for (let i = 0; i < parts.length - 1; i++) {
+		acc += parts[i];
+		if (doc.widthOfString(acc + HYPHEN) <= avail) {
+			best = { head: acc, tail: parts.slice(i + 1).join('') };
+		} else {
+			break;
+		}
+	}
+	return best;
+}
+
+/**
+ * Greedy word-wrap for a single paragraph (no embedded newlines), returning the
+ * line strings. With `hyphenate` off this is plain greedy wrapping; with it on,
+ * overflowing words are broken at hyphenation points where that lets more text
+ * fit on a line.
+ */
+function wrapParagraph(
+	doc: any,
+	paragraph: string,
+	maxWidth: number,
+	hyphenate: boolean,
+	lang: string | undefined
+): string[] {
+	const words = paragraph.split(' ');
+	const lines: string[] = [];
+	let current = '';
+
+	// Emits hyphenated head-lines for a word that is wider than a whole line,
+	// returning the trailing remainder (which fits, or is the largest piece that
+	// could not be broken further).
+	const flushOverlong = (word: string): string => {
+		let rem = word;
+		while (doc.widthOfString(rem) > maxWidth) {
+			const br = breakWordToFit(doc, rem, maxWidth, lang);
+			if (!br) break;
+			lines.push(br.head + HYPHEN);
+			rem = br.tail;
+		}
+		return rem;
+	};
+
+	// Starts a fresh line with `word`, breaking it if it is itself too wide.
+	const startLine = (word: string): string =>
+		!hyphenate || doc.widthOfString(word) <= maxWidth ? word : flushOverlong(word);
+
+	for (const word of words) {
+		if (!current) {
+			current = startLine(word);
+			continue;
+		}
+
+		const candidate = `${current} ${word}`;
+		if (doc.widthOfString(candidate) <= maxWidth) {
+			current = candidate;
+			continue;
+		}
+
+		if (hyphenate) {
+			// Try to fit a hyphenated prefix of `word` onto the current line.
+			const avail = maxWidth - doc.widthOfString(`${current} `);
+			const br = breakWordToFit(doc, word, avail, lang);
+			if (br) {
+				lines.push(`${current} ${br.head}${HYPHEN}`);
+				current = flushOverlong(br.tail);
+				continue;
+			}
+		}
+
+		// No mid-word break — push the line and start the next with `word`.
+		lines.push(current);
+		current = startLine(word);
+	}
+
+	lines.push(current);
+	return lines;
 }
 
 /**

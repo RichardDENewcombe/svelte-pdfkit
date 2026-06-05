@@ -41,6 +41,7 @@ pdf.pipe(fs.createWriteStream("invoice.pdf"));
   - [Keep with next](#keep-with-next)
   - [Orphans and widows](#orphans-and-widows)
   - [Justified text](#justified-text)
+  - [Hyphenation](#hyphenation)
 - [Using `renderComponent` directly](#using-rendercomponent-directly)
 - [API reference](#api-reference)
 - [How it works](#how-it-works)
@@ -616,8 +617,10 @@ All layout components accept a `style` prop typed as `StyleProps`.
 | `textDecoration` | `'none'` `'underline'` `'line-through'`   |
 | `orphans`        | number (min lines at page bottom, default `1`) |
 | `widows`         | number (min lines at page top, default `1`)    |
+| `hyphenation`    | boolean (break overflowing words, default `false`) |
+| `hyphenationLang`| `'en-gb'` (default) `'en-us'` or a custom-registered language |
 
-`textAlign: 'justify'`, `orphans`, and `widows` are described under [Page breaks and flow control](#page-breaks-and-flow-control).
+`textAlign: 'justify'`, `orphans`, `widows`, and `hyphenation` are described under [Page breaks and flow control](#page-breaks-and-flow-control).
 
 ### Visual
 
@@ -700,6 +703,38 @@ Set these on a `<Text>` style to limit isolated lines at a page boundary. An _or
 
 ```svelte
 <Text text={paragraph} style={{ textAlign: 'justify' }} />
+```
+
+For the best justified output, combine it with hyphenation (below) so long words can break instead of forcing wide word gaps.
+
+### Hyphenation
+
+Set `hyphenation: true` on a `<Text>` style to break words that overflow a line at valid hyphenation points, inserting a trailing `-` rather than pushing the whole word to the next line. It is off by default and most noticeable in narrow columns and justified text.
+
+```svelte
+<Text text={paragraph} style={{ textAlign: 'justify', hyphenation: true }} />
+```
+
+Patterns are language-specific. British (`en-gb`) and American (`en-us`) English ship bundled and genuinely differ (e.g. `know-ledge` vs `knowl-edge`). `en-gb` is the default; choose per node with `hyphenationLang`, or set the global default once:
+
+```ts
+import { setDefaultHyphenationLang } from 'svelte-pdf';
+setDefaultHyphenationLang('en-us');
+```
+
+```svelte
+<Text text={paragraph} style={{ hyphenation: true, hyphenationLang: 'en-us' }} />
+```
+
+For any other language, register a callback that splits a word into its parts (the parts must rejoin to the original word). This overrides the bundled dictionaries:
+
+```ts
+import Hypher from 'hypher';
+import de from 'hyphenation.de';
+import { registerHyphenationCallback } from 'svelte-pdf';
+
+const h = new Hypher(de);
+registerHyphenationCallback((word) => h.hyphenate(word));
 ```
 
 ---

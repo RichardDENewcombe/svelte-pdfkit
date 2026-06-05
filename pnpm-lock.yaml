@@ -8,6 +8,15 @@ importers:
 
   .:
     dependencies:
+      hyphenation.en-gb:
+        specifier: ^0.2.1
+        version: 0.2.1
+      hyphenation.en-us:
+        specifier: ^0.2.1
+        version: 0.2.1
+      hypher:
+        specifier: ^0.2.5
+        version: 0.2.5
       pdfkit:
         specifier: ^0.15.0
         version: 0.15.2
@@ -816,6 +825,15 @@ packages:
   hasown@2.0.2:
     resolution: {integrity: sha512-0hJU9SCPvmMzIBdZFqNPXWa6dqh7WdH0cII9y+CyS8rG3nL48Bclra9HmKhVVUHyPWNH5Y7xDwAB7bfgSjkUMQ==}
     engines: {node: '>= 0.4'}
+
+  hyphenation.en-gb@0.2.1:
+    resolution: {integrity: sha512-OByWedPBW/qo2OYIKp0d2qI8V2PKqnHOrifHJjTzG+ImsZQkeuoJ0i2ggL1LfAPzLCXKGbOv8HfiuR0i70Zh9g==}
+
+  hyphenation.en-us@0.2.1:
+    resolution: {integrity: sha512-ItXYgvIpfN8rfXl/GTBQC7DsSb5PPsKh9gGzViK/iWzCS5mvjDebFJ6xCcIYo8dal+nSp2rUzvTT7BosrKlL8A==}
+
+  hypher@0.2.5:
+    resolution: {integrity: sha512-kUTpuyzBWWDO2VakmjHC/cxesg4lKQP+Fdc+7lrK4yvjNjkV9vm5UTZMDAwOyyHTOpbkYrAMlNZHG61NnE9vYQ==}
 
   internal-slot@1.1.0:
     resolution: {integrity: sha512-4gd7VpWNQNB4UKKCFFVcp1AVv+FMOgs9NKzjHKusc8jTMhd5eL1NqQqOpE0KzMds804/yHlglp3uxgluOqAPLw==}
@@ -1899,6 +1917,16 @@ snapshots:
   hasown@2.0.2:
     dependencies:
       function-bind: 1.1.2
+
+  hyphenation.en-gb@0.2.1:
+    dependencies:
+      hypher: 0.2.5
+
+  hyphenation.en-us@0.2.1:
+    dependencies:
+      hypher: 0.2.5
+
+  hypher@0.2.5: {}
 
   internal-slot@1.1.0:
     dependencies:

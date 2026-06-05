@@ -1,5 +1,5 @@
 import type { PDFNode } from '../types/pdf.js';
-import { resolveFont } from '../runtime/font-registry.js';
+import { resolveFontStack } from '../runtime/font-registry.js';
 import { wrapLinesMeta, type WrappedLine } from '../layout/text-measure.js';
 
 export function drawText(
@@ -19,22 +19,18 @@ export function drawText(
 
 	if (!text) return;
 
-	const fontFamily = style.fontFamily ?? 'Helvetica';
 	const fontSize = style.fontSize ?? 12;
 	const color = style.color ?? 'black';
 	const opacity = style.opacity ?? 1;
 	const align = style.textAlign ?? 'left';
-	const fontName = resolveFont(fontFamily, style.fontWeight, style.fontStyle);
+	// Resolve the fontFamily stack to the first available family; the try/catch is
+	// a final safety net that drops to Helvetica if even that cannot be selected.
+	const fontName = resolveFontStack(style.fontFamily, style.fontWeight, style.fontStyle);
 
 	try {
 		doc.font(fontName);
 	} catch {
-		// Variant not registered — fall back to base family, then Helvetica.
-		try {
-			doc.font(fontFamily);
-		} catch {
-			doc.font('Helvetica');
-		}
+		doc.font('Helvetica');
 	}
 
 	doc.fontSize(fontSize);

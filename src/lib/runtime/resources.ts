@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises';
 import type { ResourceEntry } from '../types/pdf.js';
 import { registerFontOnMeasureDoc } from '../layout/text-measure.js';
-import { resolveFont } from './font-registry.js';
+import { resolveFont, registerVariantName } from './font-registry.js';
 
 // Per-process caches. These survive across render() calls intentionally —
 // a font file or image that was loaded once doesn't need to be re-read from
@@ -47,6 +47,9 @@ export async function loadResources(resources: ResourceEntry[]): Promise<void> {
 				if (entry.name) {
 					const pdfkitName = resolveFont(entry.name, entry.weight, entry.fontStyle);
 					registerFontOnMeasureDoc(pdfkitName, fontCache.get(entry.src)!);
+					// Record the variant as available so font-fallback resolution can
+					// prefer it over later families in a fontFamily stack.
+					registerVariantName(pdfkitName);
 				}
 			}
 

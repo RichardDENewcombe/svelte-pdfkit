@@ -113,7 +113,14 @@ export type StyleProps = {
   bottom?: number;
   left?: number;
   fontSize?: number;
-  fontFamily?: string;
+  /**
+   * Font family name, or a fallback list (CSS-style comma string or array).
+   * Text uses the first family that is registered or a PDFKit built-in.
+   * @example fontFamily: 'Inter'
+   * @example fontFamily: ['Inter', 'Helvetica']
+   * @example fontFamily: 'Inter, Helvetica'
+   */
+  fontFamily?: string | string[];
   fontWeight?: "normal" | "bold";
   fontStyle?: "normal" | "italic";
   color?: string;

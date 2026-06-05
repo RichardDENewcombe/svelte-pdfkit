@@ -4,7 +4,7 @@
 // without any setup.
 
 import { createRequire } from 'node:module';
-import { resolveFont } from '../runtime/font-registry.js';
+import { resolveFontStack } from '../runtime/font-registry.js';
 
 // pdfkit ships as CommonJS. In an ESM / Vite SSR context `require` is not
 // available as a global, but Node.js provides `createRequire` so we can get
@@ -42,24 +42,28 @@ export function registerFontOnMeasureDoc(name: string, buffer: Buffer): void {
 }
 
 /**
+ * Sets the measure document's font and size from a text style.
+ *
+ * Resolves the `fontFamily` (single value or fallback stack) to the first
+ * available family, falling back to Helvetica if even that cannot be selected.
+ */
+function applyMeasureFont(doc: any, style: Record<string, any>): void {
+	const fontSize = style.fontSize ?? 12;
+	const fontName = resolveFontStack(style.fontFamily, style.fontWeight, style.fontStyle);
+	try {
+		doc.font(fontName).fontSize(fontSize);
+	} catch {
+		doc.font('Helvetica').fontSize(fontSize);
+	}
+}
+
+/**
  * Returns the effective line height for a text style — the natural PDFKit
  * line height multiplied by the `lineHeight` style prop if set.
  */
 export function getLineHeight(style: Record<string, any>): number {
 	const doc = getMeasureDoc();
-	const fontSize = style.fontSize ?? 12;
-	const fontFamily = style.fontFamily ?? 'Helvetica';
-	const fontName = resolveFont(fontFamily, style.fontWeight, style.fontStyle);
-
-	try {
-		doc.font(fontName).fontSize(fontSize);
-	} catch {
-		try {
-			doc.font(fontFamily).fontSize(fontSize);
-		} catch {
-			doc.font('Helvetica').fontSize(fontSize);
-		}
-	}
+	applyMeasureFont(doc, style);
 
 	const natural = doc.currentLineHeight(true);
 	return style.lineHeight != null ? natural * style.lineHeight : natural;
@@ -101,19 +105,7 @@ export function wrapLinesMeta(
 	text = safeText;
 
 	const doc = getMeasureDoc();
-	const fontSize = style.fontSize ?? 12;
-	const fontFamily = style.fontFamily ?? 'Helvetica';
-	const fontName = resolveFont(fontFamily, style.fontWeight, style.fontStyle);
-
-	try {
-		doc.font(fontName).fontSize(fontSize);
-	} catch {
-		try {
-			doc.font(fontFamily).fontSize(fontSize);
-		} catch {
-			doc.font('Helvetica').fontSize(fontSize);
-		}
-	}
+	applyMeasureFont(doc, style);
 
 	const result: WrappedLine[] = [];
 
@@ -169,20 +161,7 @@ export function measureText(
 	if (!text) return { width: 0, height: 0 };
 
 	const doc = getMeasureDoc();
-	const fontSize = style.fontSize ?? 12;
-	const fontFamily = style.fontFamily ?? 'Helvetica';
-	const fontName = resolveFont(fontFamily, style.fontWeight, style.fontStyle);
-
-	try {
-		doc.font(fontName).fontSize(fontSize);
-	} catch {
-		// Variant not registered — fall back to the base family, then Helvetica.
-		try {
-			doc.font(fontFamily).fontSize(fontSize);
-		} catch {
-			doc.font('Helvetica').fontSize(fontSize);
-		}
-	}
+	applyMeasureFont(doc, style);
 
 	const naturalLineHeight = doc.currentLineHeight(true);
 	// Apply the lineHeight multiplier if set. This matches draw-text.ts where

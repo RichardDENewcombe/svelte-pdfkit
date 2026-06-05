@@ -36,3 +36,71 @@ export function resolveFont(
 	if (italic) return `${family}-Italic`;
 	return family;
 }
+
+// ── Font fallback chains ─────────────────────────────────────────────────────────
+//
+// `fontFamily` may be a single family or a fallback list (CSS-style comma string
+// or an array). At measure/draw time we resolve to the first family that is
+// actually available — a registered custom variant or a PDFKit built-in — so a
+// missing custom font degrades gracefully to the next choice instead of
+// silently falling back to Helvetica.
+//
+// This is family-level fallback. Per-glyph substitution (using a fallback only
+// for characters the primary font lacks) remains future work.
+
+/** The 14 standard PDF fonts, always available in PDFKit without registration. */
+const BUILTIN_FONTS = new Set([
+	'Courier', 'Courier-Bold', 'Courier-Oblique', 'Courier-BoldOblique',
+	'Helvetica', 'Helvetica-Bold', 'Helvetica-Oblique', 'Helvetica-BoldOblique',
+	'Times-Roman', 'Times-Bold', 'Times-Italic', 'Times-BoldItalic',
+	'Symbol', 'ZapfDingbats'
+]);
+
+// Variant names (e.g. "Inter-Bold") that have been registered with PDFKit via a
+// <Font> declaration. Populated by loadResources() and persists for the process
+// lifetime, mirroring the font buffer cache.
+const registeredVariants = new Set<string>();
+
+/** Records that a resolved font variant name has been registered with PDFKit. */
+export function registerVariantName(name: string): void {
+	registeredVariants.add(name);
+}
+
+/** Clears the registered-variant set. Intended for tests needing a clean state. */
+export function clearRegisteredVariants(): void {
+	registeredVariants.clear();
+}
+
+/**
+ * Normalises a `fontFamily` value into an ordered list of family names.
+ * Accepts an array, a CSS-style comma-separated string, or undefined.
+ * Surrounding quotes on individual names are stripped. Defaults to Helvetica.
+ */
+export function parseFontFamilies(value: string | string[] | undefined): string[] {
+	const raw = Array.isArray(value) ? value : typeof value === 'string' ? value.split(',') : [];
+	const list = raw
+		.map((f) => f.trim().replace(/^['"]|['"]$/g, '').trim())
+		.filter(Boolean);
+	return list.length ? list : ['Helvetica'];
+}
+
+/**
+ * Resolves a `fontFamily` (single or fallback list) plus weight/style to the
+ * PDFKit variant name of the first available family. Falls back to the first
+ * family's resolved name when none are available — the renderer's own try/catch
+ * then drops to Helvetica.
+ */
+export function resolveFontStack(
+	fontFamily: string | string[] | undefined,
+	weight?: string,
+	style?: string
+): string {
+	const families = parseFontFamilies(fontFamily);
+	for (const family of families) {
+		const variant = resolveFont(family, weight, style);
+		if (registeredVariants.has(variant) || BUILTIN_FONTS.has(variant) || BUILTIN_FONTS.has(family)) {
+			return variant;
+		}
+	}
+	return resolveFont(families[0], weight, style);
+}

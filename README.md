@@ -327,6 +327,15 @@ Local files and remote URLs are both loaded asynchronously before layout, and ea
 
 PDFKit's built-in fonts (`Helvetica`, `Helvetica-Bold`, `Helvetica-Oblique`, `Times-Roman`, `Courier`, etc.) are available without declaring a `<Font>`.
 
+**Font fallback chains:** `fontFamily` may be a fallback list — a CSS-style comma string or an array. Text uses the first family that is registered (via `<Font>`) or a PDFKit built-in, so a missing custom font degrades gracefully instead of failing:
+
+```svelte
+<Text text="Hello" style={{ fontFamily: ['Inter', 'Helvetica'] }} />
+<Text text="Hello" style={{ fontFamily: 'Inter, Helvetica' }} />
+```
+
+This is family-level fallback. Per-glyph substitution (using a fallback only for characters the primary font lacks) is not yet supported.
+
 ---
 
 ### `<Link>`
@@ -596,7 +605,7 @@ All layout components accept a `style` prop typed as `StyleProps`.
 
 | Property         | Values                                    |
 | ---------------- | ----------------------------------------- |
-| `fontFamily`     | string (font name)                        |
+| `fontFamily`     | string, comma list, or `string[]` (fallback chain) |
 | `fontSize`       | number (points)                           |
 | `fontWeight`     | `'normal'` `'bold'`                       |
 | `fontStyle`      | `'normal'` `'italic'`                     |

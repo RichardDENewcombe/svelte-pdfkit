@@ -11,6 +11,9 @@ importers:
       pdfkit:
         specifier: ^0.15.0
         version: 0.15.2
+      svg-to-pdfkit:
+        specifier: ^0.1.8
+        version: 0.1.8
       yoga-layout:
         specifier: ^3.2.1
         version: 3.2.1
@@ -1075,6 +1078,9 @@ packages:
   svelte@5.53.10:
     resolution: {integrity: sha512-UcNfWzbrjvYXYSk+U2hME25kpb87oq6/WVLeBF4khyQrb3Ob/URVlN23khal+RbdCUTMfg4qWjI9KZjCNFtYMQ==}
     engines: {node: '>=18'}
+
+  svg-to-pdfkit@0.1.8:
+    resolution: {integrity: sha512-QItiGZBy5TstGy+q8mjQTMGRlDDOARXLxH+sgVm1n/LYeo0zFcQlcCh8m4zi8QxctrxB9Kue/lStc/RD5iLadQ==}
 
   tiny-inflate@1.0.3:
     resolution: {integrity: sha512-pkY1fj1cKHb2seWDy0B16HeWyczlJA9/WW3u3c4z/NiWDsO3DOU5D7nhTLE9CF0yXv/QZFY7sEJmj24dK+Rrqw==}
@@ -2211,6 +2217,10 @@ snapshots:
       locate-character: 3.0.0
       magic-string: 0.30.21
       zimmerframe: 1.1.4
+
+  svg-to-pdfkit@0.1.8:
+    dependencies:
+      pdfkit: 0.15.2
 
   tiny-inflate@1.0.3: {}
 

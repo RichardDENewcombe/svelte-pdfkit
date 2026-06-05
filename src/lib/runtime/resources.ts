@@ -51,7 +51,14 @@ export async function loadResources(resources: ResourceEntry[]): Promise<void> {
 			}
 
 			if (entry.type === 'image' && !imageCache.has(entry.src)) {
-				if (entry.src.startsWith('http://') || entry.src.startsWith('https://')) {
+				if (entry.src.startsWith('data:')) {
+					const decoded = decodeDataUri(entry.src);
+					if (decoded) {
+						imageCache.set(entry.src, decoded);
+					} else {
+						console.warn('svelte-pdf: malformed data URI image source');
+					}
+				} else if (entry.src.startsWith('http://') || entry.src.startsWith('https://')) {
 					const response = await fetch(entry.src);
 					if (!response.ok) {
 						console.warn(`svelte-pdf: failed to fetch image "${entry.src}": HTTP ${response.status}`);
@@ -66,6 +73,29 @@ export async function loadResources(resources: ResourceEntry[]): Promise<void> {
 			}
 		})
 	);
+}
+
+/**
+ * Decodes a `data:` URI into a Buffer.
+ *
+ * Supports both base64 (`data:image/png;base64,…`) and textual payloads
+ * (`data:image/svg+xml,<svg…>`, optionally percent-encoded). Returns null when
+ * the URI has no comma separator (malformed).
+ */
+function decodeDataUri(uri: string): Buffer | null {
+	const comma = uri.indexOf(',');
+	if (comma === -1) return null;
+	const meta = uri.slice('data:'.length, comma);
+	const data = uri.slice(comma + 1);
+	if (/;base64/i.test(meta)) {
+		return Buffer.from(data, 'base64');
+	}
+	try {
+		return Buffer.from(decodeURIComponent(data), 'utf-8');
+	} catch {
+		// Not percent-encoded — use the raw text.
+		return Buffer.from(data, 'utf-8');
+	}
 }
 
 export function getFontBuffer(src: string): Buffer | undefined {

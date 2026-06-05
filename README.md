@@ -270,20 +270,26 @@ Use `text`, `children`, or `render` — not multiple at once. See [Page breaks a
 
 ### `<Image>`
 
-Renders a PNG or JPEG image. Supports local files, base64 data URIs, and remote URLs.
+Renders a PNG, JPEG, or **SVG** image. Supports local files, base64 / data URIs, and remote URLs.
 
 ```svelte
 <Image src="/logo.png" style={{ width: 120, height: 60 }} />
 <Image src="https://example.com/photo.jpg" style={{ width: 200, height: 150 }} />
+
+<!-- SVG sources are rendered as vectors (crisp at any scale) -->
+<Image src="/icons/check.svg" style={{ width: 48, height: 48 }} />
+<Image src="data:image/svg+xml;base64,PHN2Zy4uLg==" style={{ width: 48, height: 48 }} />
 ```
 
 | Prop           | Type         | Description                                            |
 | -------------- | ------------ | ------------------------------------------------------ |
-| `src`          | `string`     | File path, URL, or base64 data URI                     |
+| `src`          | `string`     | File path, URL, or data URI                            |
 | `style`        | `StyleProps` | Width, height, and layout                              |
 | `breakBefore`  | `boolean`    | Force a page break before this image                   |
 | `breakAfter`   | `boolean`    | Force a page break after this image                    |
 | `keepWithNext` | `boolean`    | Keep on the same page as the start of the next sibling |
+
+Raster sources (PNG/JPEG) are drawn by PDFKit; SVG sources are detected by extension, `image/svg+xml` data URI, or content, then drawn as vectors via [svg-to-pdfkit](https://github.com/alafr/SVG-to-PDFKit).
 
 ---
 

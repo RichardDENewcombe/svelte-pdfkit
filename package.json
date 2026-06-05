@@ -27,6 +27,7 @@
 	},
 	"dependencies": {
 		"pdfkit": "^0.15.0",
+		"svg-to-pdfkit": "^0.1.8",
 		"yoga-layout": "^3.2.1"
 	},
 	"exports": {
@@ -38,7 +39,6 @@
 		"./pdf-svelte": {
 			"types": "./dist/pdf-svelte.d.ts"
 		},
-
 		"./compiler/vite-plugin": {
 			"types": "./dist/compiler/vite-plugin.d.ts",
 			"default": "./dist/compiler/vite-plugin.js"

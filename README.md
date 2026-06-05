@@ -291,6 +291,8 @@ Renders a PNG, JPEG, or **SVG** image. Supports local files, base64 / data URIs,
 
 Raster sources (PNG/JPEG) are drawn by PDFKit; SVG sources are detected by extension, `image/svg+xml` data URI, or content, then drawn as vectors via [svg-to-pdfkit](https://github.com/alafr/SVG-to-PDFKit).
 
+**Aspect ratio:** set `width` and/or `height` in `style`. When you set only one, the other is derived from the image's intrinsic proportions (read from the PNG/JPEG header or the SVG `viewBox`), preserving aspect ratio. Set both to stretch to an exact box. If you set neither, the image has no reserved size.
+
 ---
 
 ### `<Font>`

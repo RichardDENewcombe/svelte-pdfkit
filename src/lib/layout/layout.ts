@@ -1,6 +1,8 @@
 import Yoga, { FlexDirection, Edge, Align, Justify, Direction, Gutter, PositionType } from 'yoga-layout';
 import type { DocumentContext, LayoutBox, PDFNode } from '../types/pdf.js';
 import { measureText } from './text-measure.js';
+import { imageAspectRatio } from './image-size.js';
+import { getImageBuffer } from '../runtime/resources.js';
 
 // Disable Yoga's pixel-grid rounding so measure callbacks receive and return
 // exact float values.  The default pointScaleFactor of 1 causes Yoga to snap
@@ -205,6 +207,23 @@ function applyStyle(yogaNode: any, node: PDFNode): void {
 		yogaNode.setMeasureFunc((width: number) =>
 			measureText(textForMeasure, node.props.style ?? {}, width)
 		);
+	}
+
+	if (node.type === 'image') {
+		// Give Yoga the image's intrinsic aspect ratio so that specifying only one
+		// of width/height derives the other and preserves proportions. Only applied
+		// when exactly one dimension is set — if both are given they are honoured
+		// as-is (Yoga's aspectRatio would otherwise override an explicit value), and
+		// if neither is given there is no base dimension to scale from.
+		const hasWidth = s.width != null;
+		const hasHeight = s.height != null;
+		if (hasWidth !== hasHeight) {
+			const buffer = getImageBuffer(node.props.src);
+			if (buffer) {
+				const ratio = imageAspectRatio(buffer);
+				if (ratio != null) yogaNode.setAspectRatio(ratio);
+			}
+		}
 	}
 }
 

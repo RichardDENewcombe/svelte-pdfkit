@@ -1,8 +1,9 @@
 <!--
 	Demo document: exercises page numbers, tables, remote images, font variants,
 	SVG primitives, gradients, clip paths, SVG text, explicit page breaks
-	(breakBefore / breakAfter), justified text (textAlign: 'justify'), and
-	keep-with-next pagination control in a multi-page PDF.
+	(breakBefore / breakAfter), justified text (textAlign: 'justify'),
+	hyphenation (the hyphenation style prop), and keep-with-next pagination
+	control in a multi-page PDF.
 
 	Render it with:
 	  import { renderComponent } from 'svelte-pdf';
@@ -1078,6 +1079,149 @@
 		text="Justification shines in dense, column-width body copy such as terms and conditions, legal clauses, or article text. Each line below is stretched to the page margins by widening the spaces between words just enough to fill the available measure, producing the clean rectangular block of text associated with professional print typography. The final line, having nothing to align against, simply ends wherever the words run out."
 		style={{ fontFamily: 'Helvetica', fontSize: 10, textAlign: 'justify', lineHeight: 1.4 }}
 	/>
+
+	<!-- Fixed footer -->
+	<View
+		fixed={true}
+		style={{ position: 'absolute', bottom: 20, left: 40, right: 40, flexDirection: 'row', justifyContent: 'space-between' }}
+	>
+		<Text
+			text="Acme Corp · Confidential"
+			style={{ fontFamily: 'Helvetica-Oblique', fontSize: 8, color: muted }}
+		/>
+		<Text
+			render={pageFooter}
+			style={{ fontFamily: 'Helvetica', fontSize: 8, color: muted }}
+		/>
+	</View>
+
+</Page>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<!-- Hyphenation page                                                       -->
+<!--                                                                        -->
+<!-- Demonstrates the opt-in `hyphenation` style prop on <Text>.  Words that -->
+<!-- overflow a line are broken at dictionary hyphenation points with a      -->
+<!-- trailing hyphen instead of being pushed whole to the next line.         -->
+<!--                                                                        -->
+<!-- Two comparisons:                                                        -->
+<!--   1. Justified, off vs on — hyphenation removes the wide word gaps     -->
+<!--      ("rivers") that justification alone leaves in a narrow column.     -->
+<!--   2. British vs American patterns — the same paragraph hyphenated with  -->
+<!--      en-gb and en-us, which genuinely break words at different points   -->
+<!--      (e.g. know-ledge vs knowl-edge).                                   -->
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<Page size="A4" style={{ padding: 40 }}>
+
+	<!-- Title -->
+	<Text
+		text="Hyphenation"
+		style={{ fontFamily: 'Helvetica-Bold', fontSize: 20, color: brand, marginBottom: 4 }}
+	/>
+	<Text
+		text="Break long words across lines at dictionary hyphenation points with the opt-in hyphenation style prop on any <Text> node."
+		style={{ fontFamily: 'Helvetica-Oblique', fontSize: 9, color: muted, marginBottom: 20 }}
+	/>
+
+	<!-- What it does -->
+	<Text
+		text="How it works"
+		style={{ fontFamily: 'Helvetica-Bold', fontSize: 11, color: brand, marginBottom: 6 }}
+	/>
+	<Text
+		text="With hyphenation enabled, a word that would overflow the line is split at a valid Knuth-Liang pattern point and a trailing hyphen is inserted, rather than being moved whole to the next line. It is off by default and most noticeable in narrow columns and justified text, where it removes the wide inter-word gaps that justification alone produces."
+		style={{ fontFamily: 'Helvetica', fontSize: 10, marginBottom: 16 }}
+	/>
+
+	<!-- Style prop reference -->
+	<View style={{ backgroundColor: subtle, padding: 12, borderRadius: 4, marginBottom: 20 }}>
+		<Text
+			text={"<Text style={{ hyphenation: true }}>…</Text>"}
+			style={{ fontFamily: 'Courier', fontSize: 9, color: brand, marginBottom: 4 }}
+		/>
+		<Text
+			text={"hyphenationLang: 'en-gb' (default) | 'en-us'   — patterns are language-specific"}
+			style={{ fontFamily: 'Courier', fontSize: 9, color: brand, marginBottom: 8 }}
+		/>
+		<Text
+			text="en-gb and en-us ship bundled; other languages can be supplied via registerHyphenationCallback()."
+			style={{ fontFamily: 'Helvetica-Oblique', fontSize: 8, color: muted }}
+		/>
+	</View>
+
+	<!-- ── Comparison 1: justified, off vs on ─────────────────────────────── -->
+	<Text
+		text="Justified text — hyphenation off vs on"
+		style={{ fontFamily: 'Helvetica-Bold', fontSize: 11, color: brand, marginBottom: 4 }}
+	/>
+	<Text
+		text="The same justified paragraph in a narrow column. On the left, justification alone stretches the spaces to fill each line, leaving uneven gaps. On the right, hyphenation lets long words break so the spacing stays tight and even."
+		style={{ fontFamily: 'Helvetica-Oblique', fontSize: 9, color: muted, marginBottom: 10 }}
+	/>
+	<View style={{ flexDirection: 'row', gap: 12, marginBottom: 20 }}>
+
+		<!-- Left: justified, hyphenation off -->
+		<View style={{ flexGrow: 1, flexShrink: 1, flexBasis: 0, borderWidth: 1, borderColor: border, borderRadius: 4, padding: 8 }}>
+			<Text
+				text="hyphenation: false (default)"
+				style={{ fontFamily: 'Helvetica-Bold', fontSize: 8, color: muted, marginBottom: 6 }}
+			/>
+			<Text
+				text="Notwithstanding the extraordinary administrative responsibilities, the internationalisation programme demonstrated incontrovertibly that comprehensive documentation consistently outperforms improvised alternatives."
+				style={{ fontFamily: 'Helvetica', fontSize: 10, textAlign: 'justify', lineHeight: 1.4 }}
+			/>
+		</View>
+
+		<!-- Right: justified, hyphenation on -->
+		<View style={{ flexGrow: 1, flexShrink: 1, flexBasis: 0, borderWidth: 1, borderColor: '#93c5fd', borderRadius: 4, padding: 8 }}>
+			<Text
+				text="hyphenation: true"
+				style={{ fontFamily: 'Helvetica-Bold', fontSize: 8, color: brand, marginBottom: 6 }}
+			/>
+			<Text
+				text="Notwithstanding the extraordinary administrative responsibilities, the internationalisation programme demonstrated incontrovertibly that comprehensive documentation consistently outperforms improvised alternatives."
+				style={{ fontFamily: 'Helvetica', fontSize: 10, textAlign: 'justify', lineHeight: 1.4, hyphenation: true }}
+			/>
+		</View>
+
+	</View>
+
+	<!-- ── Comparison 2: British vs American patterns ─────────────────────── -->
+	<Text
+		text="British vs American break points"
+		style={{ fontFamily: 'Helvetica-Bold', fontSize: 11, color: brand, marginBottom: 4 }}
+	/>
+	<Text
+		text="The same paragraph hyphenated with each dictionary. British (en-gb) breaks by etymology, American (en-us) by pronunciation, so words split at different points — e.g. know-ledge vs knowl-edge, demo-cracy vs democ-racy. Left-aligned here so the hyphen positions are easy to compare."
+		style={{ fontFamily: 'Helvetica-Oblique', fontSize: 9, color: muted, marginBottom: 10 }}
+	/>
+	<View style={{ flexDirection: 'row', gap: 12 }}>
+
+		<!-- Left: en-gb (default) -->
+		<View style={{ flexGrow: 1, flexShrink: 1, flexBasis: 0, borderWidth: 1, borderColor: '#86efac', borderRadius: 4, padding: 8 }}>
+			<Text
+				text="hyphenationLang: 'en-gb'"
+				style={{ fontFamily: 'Courier', fontSize: 8, color: '#16a34a', marginBottom: 6 }}
+			/>
+			<Text
+				text="The committee acknowledged the knowledge, democracy, and responsibility underpinning the organisation's international development philosophy."
+				style={{ fontFamily: 'Helvetica', fontSize: 10, lineHeight: 1.4, hyphenation: true, hyphenationLang: 'en-gb' }}
+			/>
+		</View>
+
+		<!-- Right: en-us -->
+		<View style={{ flexGrow: 1, flexShrink: 1, flexBasis: 0, borderWidth: 1, borderColor: '#fca5a5', borderRadius: 4, padding: 8 }}>
+			<Text
+				text="hyphenationLang: 'en-us'"
+				style={{ fontFamily: 'Courier', fontSize: 8, color: '#ef4444', marginBottom: 6 }}
+			/>
+			<Text
+				text="The committee acknowledged the knowledge, democracy, and responsibility underpinning the organisation's international development philosophy."
+				style={{ fontFamily: 'Helvetica', fontSize: 10, lineHeight: 1.4, hyphenation: true, hyphenationLang: 'en-us' }}
+			/>
+		</View>
+
+	</View>
 
 	<!-- Fixed footer -->
 	<View

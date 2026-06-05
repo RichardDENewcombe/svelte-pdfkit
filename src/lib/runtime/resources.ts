@@ -22,10 +22,21 @@ export async function loadResources(resources: ResourceEntry[]): Promise<void> {
 	await Promise.all(
 		resources.map(async (entry) => {
 			if (entry.type === 'font') {
-				// Load the buffer if not already cached.
+				// Load the buffer if not already cached. Fonts may be local files
+				// or remote URLs (http/https), mirroring image loading.
 				if (!fontCache.has(entry.src)) {
-					const buffer = await fs.readFile(entry.src);
-					fontCache.set(entry.src, buffer);
+					if (entry.src.startsWith('http://') || entry.src.startsWith('https://')) {
+						const response = await fetch(entry.src);
+						if (!response.ok) {
+							console.warn(`svelte-pdf: failed to fetch font "${entry.src}": HTTP ${response.status}`);
+							return;
+						}
+						const ab = await response.arrayBuffer();
+						fontCache.set(entry.src, Buffer.from(ab));
+					} else {
+						const buffer = await fs.readFile(entry.src);
+						fontCache.set(entry.src, buffer);
+					}
 				}
 
 				// Register on the measure doc so layout gets correct font metrics.

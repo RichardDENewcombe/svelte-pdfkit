@@ -292,9 +292,13 @@ Renders a PNG or JPEG image. Supports local files, base64 data URIs, and remote 
 Declares a custom font. Place inside `<Document>` or at the top of a `<Page>`. Fonts are loaded asynchronously before layout runs.
 
 ```svelte
+<!-- Local files -->
 <Font name="Inter" src="/fonts/Inter-Regular.ttf" />
 <Font name="Inter" src="/fonts/Inter-Bold.ttf" weight="bold" />
 <Font name="Inter" src="/fonts/Inter-Italic.ttf" fontStyle="italic" />
+
+<!-- Remote URL — fetched at render time -->
+<Font name="Inter" src="https://example.com/fonts/Inter-Regular.ttf" />
 ```
 
 Then use the font name in text styles:
@@ -304,12 +308,14 @@ Then use the font name in text styles:
 <Text text="Bold"  style={{ fontFamily: 'Inter', fontWeight: 'bold', fontSize: 14 }} />
 ```
 
-| Prop        | Type                   | Description                             |
-| ----------- | ---------------------- | --------------------------------------- |
-| `name`      | `string`               | Font family name (used in `fontFamily`) |
-| `src`       | `string`               | Path to `.ttf` or `.otf` file           |
-| `weight`    | `'normal' \| 'bold'`   | Font weight variant                     |
-| `fontStyle` | `'normal' \| 'italic'` | Font style variant                      |
+| Prop        | Type                   | Description                                  |
+| ----------- | ---------------------- | -------------------------------------------- |
+| `name`      | `string`               | Font family name (used in `fontFamily`)      |
+| `src`       | `string`               | Path or `http(s)` URL to a `.ttf`/`.otf` file |
+| `weight`    | `'normal' \| 'bold'`   | Font weight variant                          |
+| `fontStyle` | `'normal' \| 'italic'` | Font style variant                           |
+
+Local files and remote URLs are both loaded asynchronously before layout, and each `src` is cached for the process lifetime so it is fetched only once. If a remote font fails to load, a warning is logged and text falls back to Helvetica.
 
 PDFKit's built-in fonts (`Helvetica`, `Helvetica-Bold`, `Helvetica-Oblique`, `Times-Roman`, `Courier`, etc.) are available without declaring a `<Font>`.
 
@@ -807,5 +813,5 @@ const footer: PageNumberRenderer = ({ pageNumber, totalPages }) =>
 ## Limitations
 
 - Server-side only — does not run in a browser
-- Remote image loading requires network access at render time
+- Remote image and font loading requires network access at render time
 - Text measurement uses PDFKit metrics; custom fonts must be declared with `<Font>` before layout runs

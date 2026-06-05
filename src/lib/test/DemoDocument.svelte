@@ -24,6 +24,8 @@
 	  <Font name="Inter" src="/path/to/Inter-Regular.ttf" weight="normal" />
 	  <Font name="Inter" src="/path/to/Inter-Bold.ttf"    weight="bold"   />
 	  <Font name="Inter" src="/path/to/Inter-Italic.ttf"  fontStyle="italic" />
+	Fonts may also be loaded from a URL — fetched (and cached) at render time:
+	  <Font name="Inter" src="https://example.com/fonts/Inter-Regular.ttf" />
 	Then replace fontFamily values below with 'Inter'.
 -->
 <script lang="ts">
@@ -80,6 +82,20 @@
 	const subtle = '#f3f4f6';
 	const border = '#d1d5db';
 	const muted  = '#6b7280';
+
+	// ── SVG image source ─────────────────────────────────────────────────────────
+	// A 2:1 (200×100) badge rendered via <Image src="data:image/svg+xml,...">.
+	// SVG images are drawn as vectors (crisp at any scale) by svg-to-pdfkit, and
+	// the 2:1 viewBox lets the aspect-ratio demo derive one dimension from the other.
+	const svgBadge =
+		'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 100">' +
+		  '<rect x="0" y="0" width="200" height="100" rx="12" fill="#1a56db"/>' +
+		  '<circle cx="50" cy="50" r="30" fill="#fbbf24"/>' +
+		  '<path d="M40 50 L58 70 L92 30" stroke="#ffffff" stroke-width="8" fill="none"/>' +
+		  '<rect x="112" y="34" width="72" height="12" rx="6" fill="#ffffff" opacity="0.9"/>' +
+		  '<rect x="112" y="56" width="52" height="10" rx="5" fill="#ffffff" opacity="0.6"/>' +
+		'</svg>';
+	const svgImage = 'data:image/svg+xml,' + encodeURIComponent(svgBadge);
 </script>
 
 <!--
@@ -1327,6 +1343,98 @@
 		<!-- X-axis label -->
 		<SvgText x={255} y={163} text="USD (thousands)" fontSize={8} fill={muted} textAnchor="middle" />
 	</Svg>
+
+	<!-- Fixed footer -->
+	<View
+		fixed={true}
+		style={{ position: 'absolute', bottom: 20, left: 40, right: 40, flexDirection: 'row', justifyContent: 'space-between' }}
+	>
+		<Text
+			text="Acme Corp · Confidential"
+			style={{ fontFamily: 'Helvetica-Oblique', fontSize: 8, color: muted }}
+		/>
+		<Text
+			render={pageFooter}
+			style={{ fontFamily: 'Helvetica', fontSize: 8, color: muted }}
+		/>
+	</View>
+
+</Page>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<!-- Image Sources & Aspect Ratio page                                      -->
+<!--                                                                        -->
+<!-- Demonstrates <Image> SVG sources (drawn as vectors) and automatic      -->
+<!-- aspect-ratio sizing: specify one of width/height and the other is      -->
+<!-- derived from the image's intrinsic proportions.                        -->
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<Page size="A4" style={{ padding: 40 }}>
+
+	<!-- Title -->
+	<Text
+		text="Image Sources & Aspect Ratio"
+		style={{ fontFamily: 'Helvetica-Bold', fontSize: 20, color: brand, marginBottom: 4 }}
+	/>
+	<Text
+		text="<Image> renders PNG and JPEG bitmaps as well as SVG sources, from local files, remote URLs, or data URIs."
+		style={{ fontFamily: 'Helvetica-Oblique', fontSize: 9, color: muted, marginBottom: 20 }}
+	/>
+
+	<!-- ── SVG image source ───────────────────────────────────────────────── -->
+	<Text
+		text="SVG image source"
+		style={{ fontFamily: 'Helvetica-Bold', fontSize: 11, color: brand, marginBottom: 6 }}
+	/>
+	<Text
+		text="SVG sources are drawn as true vectors (crisp at any scale) via svg-to-pdfkit. The badge below is a data:image/svg+xml URI — a .svg file path or URL works identically. Rendered here at three sizes from the same source:"
+		style={{ fontFamily: 'Helvetica', fontSize: 10, marginBottom: 10 }}
+	/>
+	<View style={{ flexDirection: 'row', alignItems: 'center', gap: 20, marginBottom: 20 }}>
+		<Image src={svgImage} style={{ width: 200, height: 100 }} />
+		<Image src={svgImage} style={{ width: 120, height: 60 }} />
+		<Image src={svgImage} style={{ width: 70, height: 35 }} />
+	</View>
+
+	<!-- ── Aspect ratio ───────────────────────────────────────────────────── -->
+	<Text
+		text="Automatic aspect ratio"
+		style={{ fontFamily: 'Helvetica-Bold', fontSize: 11, color: brand, marginBottom: 6 }}
+	/>
+	<Text
+		text="The badge's intrinsic ratio is 2:1. Set only one of width or height and the layout derives the other so proportions are preserved. Set both to override and stretch. This works for PNG and JPEG too — the size is read from the image header."
+		style={{ fontFamily: 'Helvetica', fontSize: 10, marginBottom: 12 }}
+	/>
+
+	<View style={{ flexDirection: 'column', gap: 14 }}>
+
+		<!-- width only -->
+		<View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+			<View style={{ width: 200 }}>
+				<Text text="style={{ width: 180 }}" style={{ fontFamily: 'Courier', fontSize: 9, color: brand }} />
+				<Text text="height derived → 90 (2:1)" style={{ fontFamily: 'Helvetica-Oblique', fontSize: 8, color: muted, marginTop: 2 }} />
+			</View>
+			<Image src={svgImage} style={{ width: 180 }} />
+		</View>
+
+		<!-- height only -->
+		<View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+			<View style={{ width: 200 }}>
+				<Text text="style={{ height: 60 }}" style={{ fontFamily: 'Courier', fontSize: 9, color: brand }} />
+				<Text text="width derived → 120 (2:1)" style={{ fontFamily: 'Helvetica-Oblique', fontSize: 8, color: muted, marginTop: 2 }} />
+			</View>
+			<Image src={svgImage} style={{ height: 60 }} />
+		</View>
+
+		<!-- both — stretched -->
+		<View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+			<View style={{ width: 200 }}>
+				<Text text="style={{ width: 120, height: 120 }}" style={{ fontFamily: 'Courier', fontSize: 9, color: brand }} />
+				<Text text="both set → stretched to a square" style={{ fontFamily: 'Helvetica-Oblique', fontSize: 8, color: muted, marginTop: 2 }} />
+			</View>
+			<Image src={svgImage} style={{ width: 120, height: 120 }} />
+		</View>
+
+	</View>
 
 	<!-- Fixed footer -->
 	<View

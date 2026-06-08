@@ -14,7 +14,7 @@ import { warn } from './warn.js';
  * It can also be called directly for testing or non-template use cases.
  */
 export async function renderComponent(
-	component: Component,
+	component: Component<any, any, any>,
 	props: Record<string, any> = {}
 ): Promise<any> {
 	const doc = createDocument();

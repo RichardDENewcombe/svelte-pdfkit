@@ -34,7 +34,7 @@ function renderInContext(component: any, props: Record<string, any> = {}) {
 	// Must access .html to force lazy execution of the component tree.
 	const { html: _ } = svelteRender(component, {
 		props,
-		context: new Map([
+		context: new Map<string, any>([
 			['__pdf__', pageNode],
 			['__pdf_root__', doc]
 		])

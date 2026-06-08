@@ -1,7 +1,9 @@
 {
 	"name": "svelte-pdf",
-	"version": "0.0.1",
+	"version": "0.1.0",
 	"type": "module",
+	"license": "MIT",
+	"author": "Richard Newcombe <r.newc@icloud.com>",
 	"scripts": {
 		"dev": "vite dev",
 		"build": "vite build",
@@ -24,6 +26,11 @@
 	},
 	"peerDependencies": {
 		"svelte": "^5.0.0"
+	},
+	"pnpm": {
+		"overrides": {
+			"vite": "^7.3.1"
+		}
 	},
 	"dependencies": {
 		"hyphenation.en-gb": "^0.2.1",

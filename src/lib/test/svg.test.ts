@@ -366,7 +366,7 @@ describe('LinearGradient – AST construction', () => {
 		const doc = buildGradientDoc();
 		const svg = doc.children[0].children[0].children[0];
 		const defs = svg.children.find((c: any) => c.type === 'svg_defs')!;
-		const lg = defs.children.find((c: any) => c.type === 'svg_linear_gradient');
+		const lg = defs.children.find((c: any) => c.type === 'svg_linear_gradient')!;
 		expect(lg).toBeDefined();
 		expect(lg.props.id).toBe('grad1');
 		expect(lg.props.x1).toBe(0);
@@ -394,7 +394,7 @@ describe('RadialGradient – AST construction', () => {
 		const doc = buildGradientDoc();
 		const svg = doc.children[0].children[0].children[0];
 		const defs = svg.children.find((c: any) => c.type === 'svg_defs')!;
-		const rg = defs.children.find((c: any) => c.type === 'svg_radial_gradient');
+		const rg = defs.children.find((c: any) => c.type === 'svg_radial_gradient')!;
 		expect(rg).toBeDefined();
 		expect(rg.props.id).toBe('grad2');
 		expect(rg.props.cx).toBe(150);
@@ -433,7 +433,7 @@ describe('ClipPath – AST construction', () => {
 		const svg = doc.children[0].children[0].children[0];
 		const defs = svg.children.find((c: any) => c.type === 'svg_defs')!;
 		expect(defs).toBeDefined();
-		const cp = defs.children.find((c: any) => c.type === 'svg_clip_path');
+		const cp = defs.children.find((c: any) => c.type === 'svg_clip_path')!;
 		expect(cp).toBeDefined();
 		expect(cp.props.id).toBe('clip1');
 	});
@@ -495,7 +495,7 @@ describe('SvgText – AST construction', () => {
 	it('simple svg_text stores x, y, text, fontSize, fill', () => {
 		const doc = buildTextDoc();
 		const svg = doc.children[0].children[0].children[0];
-		const node = svg.children.find((c: any) => c.type === 'svg_text' && c.props.text === 'Hello, SVG!');
+		const node = svg.children.find((c: any) => c.type === 'svg_text' && c.props.text === 'Hello, SVG!')!;
 		expect(node).toBeDefined();
 		expect(node.props.x).toBe(10);
 		expect(node.props.y).toBe(20);
@@ -506,7 +506,7 @@ describe('SvgText – AST construction', () => {
 	it('svg_text with textAnchor stores the prop', () => {
 		const doc = buildTextDoc();
 		const svg = doc.children[0].children[0].children[0];
-		const node = svg.children.find((c: any) => c.type === 'svg_text' && c.props.text === 'Centered');
+		const node = svg.children.find((c: any) => c.type === 'svg_text' && c.props.text === 'Centered')!;
 		expect(node).toBeDefined();
 		expect(node.props.textAnchor).toBe('middle');
 		expect(node.props.x).toBe(150);
@@ -517,7 +517,7 @@ describe('SvgText – AST construction', () => {
 		const svg = doc.children[0].children[0].children[0];
 		const node = svg.children.find(
 			(c: any) => c.type === 'svg_text' && c.children.some((ch: any) => ch.type === 'svg_tspan')
-		);
+		)!;
 		expect(node).toBeDefined();
 		const tspans = node.children.filter((c: any) => c.type === 'svg_tspan');
 		expect(tspans.length).toBeGreaterThanOrEqual(2);
@@ -528,9 +528,9 @@ describe('SvgText – AST construction', () => {
 		const svg = doc.children[0].children[0].children[0];
 		const textNode = svg.children.find(
 			(c: any) => c.type === 'svg_text' && c.children.some((ch: any) => ch.props.text === 'Bold')
-		);
+		)!;
 		expect(textNode).toBeDefined();
-		const boldSpan = textNode.children.find((c: any) => c.props.text === 'Bold');
+		const boldSpan = textNode.children.find((c: any) => c.props.text === 'Bold')!;
 		expect(boldSpan).toBeDefined();
 		expect(boldSpan.props.fontFamily).toBe('Helvetica-Bold');
 		expect(boldSpan.props.fill).toBe('red');
@@ -541,9 +541,9 @@ describe('SvgText – AST construction', () => {
 		const svg = doc.children[0].children[0].children[0];
 		const textNode = svg.children.find(
 			(c: any) => c.type === 'svg_text' && c.children.some((ch: any) => ch.props.text === 'Line two')
-		);
+		)!;
 		expect(textNode).toBeDefined();
-		const span = textNode.children.find((c: any) => c.props.text === 'Line two');
+		const span = textNode.children.find((c: any) => c.props.text === 'Line two')!;
 		expect(span.props.dy).toBe(14);
 	});
 

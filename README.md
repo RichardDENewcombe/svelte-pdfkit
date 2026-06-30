@@ -28,6 +28,7 @@ pdf.pipe(fs.createWriteStream("invoice.pdf"));
 
 ## Contents
 
+- [Core principles](#core-principles)
 - [Installation](#installation)
 - [Vite / SvelteKit setup](#vite--sveltekit-setup)
 - [Quick start](#quick-start)
@@ -47,6 +48,71 @@ pdf.pipe(fs.createWriteStream("invoice.pdf"));
 - [How it works](#how-it-works)
 - [TypeScript](#typescript)
 - [Limitations](#limitations)
+- [Further reading](#further-reading)
+
+---
+
+## Core principles
+
+svelte-pdf is small to learn because it leans on things you already know —
+Svelte and flexbox — and deliberately avoids reinventing the browser. Five ideas
+explain almost all of its behaviour:
+
+### 1. It's Svelte all the way down
+
+A PDF is just a Svelte component tree. You compose layouts with components,
+loops, conditionals, props, and snippets exactly as you would in any Svelte app.
+There is no separate templating language.
+
+```svelte
+{#each invoice.lines as line}
+  <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+    <Text text={line.description} />
+    <Text text={line.amount} style={{ textAlign: 'right' }} />
+  </View>
+{/each}
+```
+
+The components don't render HTML — they build an abstract **PDF node tree**.
+That's the only difference from a normal Svelte component, and it's invisible
+when you're authoring.
+
+### 2. Layout is flexbox (via Yoga), not CSS
+
+Every box is a flex container. Styling is a typed subset of flexbox plus a few
+visual properties, passed as a plain object — no CSS strings, classes, or
+stylesheets. Units are PDF **points** (1pt = 1/72").
+
+```svelte
+<View style={{ flexDirection: 'row', gap: 8, padding: 12, backgroundColor: '#f3f4f6' }}>
+```
+
+Like React Native, the **default direction is `column`** (top-to-bottom). The
+same Yoga engine that powers React Native and React-PDF computes the geometry.
+
+### 3. Two primitives: boxes and text
+
+`<View>` is the box (the `<div>`); `<Text>` is the only place text can live.
+Raw strings must always be wrapped in `<Text>`. Everything else — `<Image>`,
+`<Link>`, tables, SVG — composes from there.
+
+### 4. Server-side, streaming, stateless
+
+Rendering runs entirely in Node/edge with no DOM. `render()` returns a Node.js
+`Readable` stream, so large documents stream out incrementally instead of
+buffering in memory. Each `render()` call builds a **fresh** document context
+(no global state), so concurrent requests are safe with zero extra work.
+
+### 5. Pages fill themselves
+
+You describe content; the paginator decides where pages break. Overflowing
+content flows onto new pages automatically — long text splits line-by-line,
+boxes flow as units. You only intervene when you want to
+([`breakBefore`/`breakAfter`](#explicit-page-breaks),
+[`keepWithNext`](#keep-with-next), [`fixed`](#fixed-elements-headers-and-footers)
+headers/footers, [orphans/widows](#orphans-and-widows)).
+
+> The full pipeline behind these principles is in [How it works](#how-it-works).
 
 ---
 
@@ -177,6 +243,22 @@ pdf.pipe(fs.createWriteStream("report.pdf"));
 ---
 
 ## Components
+
+Each component below is summarised here and documented in full — with all props,
+examples, and gotchas — in a README next to its source:
+
+| Component(s) | Reference |
+| ------------ | --------- |
+| `<Document>` | [src/lib/components/Document](src/lib/components/Document/README.md) |
+| `<Page>`     | [src/lib/components/Page](src/lib/components/Page/README.md) |
+| `<View>`     | [src/lib/components/View](src/lib/components/View/README.md) |
+| `<Text>`     | [src/lib/components/Text](src/lib/components/Text/README.md) |
+| `<Image>`    | [src/lib/components/Image](src/lib/components/Image/README.md) |
+| `<Font>`     | [src/lib/components/Font](src/lib/components/Font/README.md) |
+| `<Link>`     | [src/lib/components/Link](src/lib/components/Link/README.md) |
+| `<Canvas>`   | [src/lib/components/Canvas](src/lib/components/Canvas/README.md) |
+| SVG set      | [src/lib/components/Svg](src/lib/components/Svg/README.md) |
+| `<Table>` `<Row>` `<Cell>` | [src/lib/components/Table](src/lib/components/Table/README.md) |
 
 ### `<Document>`
 
@@ -867,3 +949,16 @@ const footer: PageNumberRenderer = ({ pageNumber, totalPages }) =>
 - Server-side only — does not run in a browser
 - Remote image and font loading requires network access at render time
 - Text measurement uses PDFKit metrics; custom fonts must be declared with `<Font>` before layout runs
+- Family-level font fallback only — per-glyph substitution (and colour emoji) is not yet supported
+- No fillable form fields, file attachments, or PDF bookmarks/outline
+
+---
+
+## Further reading
+
+| Document | For |
+| -------- | --- |
+| Per-component READMEs (table in [Components](#components)) | Full props and examples for each component |
+| [`LLMS.md`](./LLMS.md) | A dense, complete usage reference written for AI assistants generating templates |
+| [`CONTRIBUTING.md`](./CONTRIBUTING.md) | Local setup, project layout, testing, and conventions |
+| `src/examples/` | Runnable Invoice / Report / Resume templates |

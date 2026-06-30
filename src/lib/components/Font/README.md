@@ -55,6 +55,9 @@ to build a family. `<Text>` then resolves the right file from `fontWeight` /
 - Each `src` is loaded once and cached for the process lifetime.
 - A remote font that fails to load logs a warning and falls back to Helvetica.
 - `fontFamily` supports **fallback chains** (`['Inter', 'Helvetica']`) so a
-  missing custom font degrades to the next choice. See [Text](../Text/README.md).
+  missing custom font degrades to the next choice, and the same chain provides
+  **per-glyph fallback** — each character is drawn by the first family that has
+  its glyph (e.g. `['Inter', 'NotoSansSC']` keeps Latin in Inter and pulls CJK
+  from Noto). See [Text](../Text/README.md).
 
 See the [top-level README](../../../../README.md) for the full guide.

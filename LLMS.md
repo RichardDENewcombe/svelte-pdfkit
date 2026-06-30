@@ -228,7 +228,10 @@ Custom fonts: one `<Font>` per variant; use the family name + `fontWeight`/
 <Text style={{ fontFamily: 'Inter', fontWeight: 'bold' }}>Bold</Text>
 ```
 
-Fallback chain (family-level only): `fontFamily: ['Inter', 'Helvetica']`.
+Fallback chain: `fontFamily: ['Inter', 'Helvetica']`. The list is also a
+per-glyph fallback — each character uses the first family that has its glyph, so
+`['Inter', 'NotoSansSC']` renders Latin from Inter and CJK from Noto in the same
+run. Colour emoji renders monochrome (PDFKit limitation).
 
 ---
 
@@ -275,8 +278,8 @@ Types: `StyleProps`, `PageRenderProps`, `PageNumberRenderer`, `PDFNode`,
 - CSS strings (`style="..."`), CSS classes, `class=`, stylesheets, `@media`.
 - `display`, `grid`, `float`, `inline`, `z-index`, box-shadow, `transform` /
   `rotate` / `scale` on layout nodes (only SVG `<G transform>` exists).
-- Per-glyph font fallback (family-level fallback only) — non-Latin scripts /
-  emoji outside the chosen font may not render.
+- Colour emoji (COLR/CBDT/sbix) — per-glyph fallback works, but emoji render
+  monochrome (gated by PDFKit).
 - Fillable form fields (AcroForm), file attachments, PDF bookmarks/outline.
 - Running in the browser; reading from the DOM.
 - `gradientUnits: 'objectBoundingBox'`, nested `<ClipPath>`, nested `<Tspan>`.

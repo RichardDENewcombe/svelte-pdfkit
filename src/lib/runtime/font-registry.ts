@@ -45,8 +45,10 @@ export function resolveFont(
 // missing custom font degrades gracefully to the next choice instead of
 // silently falling back to Helvetica.
 //
-// This is family-level fallback. Per-glyph substitution (using a fallback only
-// for characters the primary font lacks) remains future work.
+// This is the family-level resolution. Per-glyph substitution (keeping the
+// primary font for the glyphs it has and dropping to a later family only for the
+// code points it lacks — e.g. CJK in an otherwise-Latin run) is layered on top
+// in layout/font-runs.ts, which uses the same family list as the fallback chain.
 
 /** The 14 standard PDF fonts, always available in PDFKit without registration. */
 const BUILTIN_FONTS = new Set([
@@ -55,6 +57,11 @@ const BUILTIN_FONTS = new Set([
 	'Times-Roman', 'Times-Bold', 'Times-Italic', 'Times-BoldItalic',
 	'Symbol', 'ZapfDingbats'
 ]);
+
+/** Whether `variant` is one of the 14 standard PDF fonts (no buffer to embed). */
+export function isBuiltinVariant(variant: string): boolean {
+	return BUILTIN_FONTS.has(variant);
+}
 
 // Variant names (e.g. "Inter-Bold") that have been registered with PDFKit via a
 // <Font> declaration. Populated by loadResources() and persists for the process
@@ -85,6 +92,17 @@ export function parseFontFamilies(value: string | string[] | undefined): string[
 }
 
 /**
+ * Whether `family` (at the given weight/style) resolves to a font that is
+ * actually available — a registered custom variant or a PDFKit built-in. This
+ * is the same availability test {@link resolveFontStack} applies; glyph-level
+ * fallback uses it to build the candidate font list for a run.
+ */
+export function isFamilyAvailable(family: string, weight?: string, style?: string): boolean {
+	const variant = resolveFont(family, weight, style);
+	return registeredVariants.has(variant) || BUILTIN_FONTS.has(variant) || BUILTIN_FONTS.has(family);
+}
+
+/**
  * Resolves a `fontFamily` (single or fallback list) plus weight/style to the
  * PDFKit variant name of the first available family. Falls back to the first
  * family's resolved name when none are available — the renderer's own try/catch
@@ -97,9 +115,8 @@ export function resolveFontStack(
 ): string {
 	const families = parseFontFamilies(fontFamily);
 	for (const family of families) {
-		const variant = resolveFont(family, weight, style);
-		if (registeredVariants.has(variant) || BUILTIN_FONTS.has(variant) || BUILTIN_FONTS.has(family)) {
-			return variant;
+		if (isFamilyAvailable(family, weight, style)) {
+			return resolveFont(family, weight, style);
 		}
 	}
 	return resolveFont(families[0], weight, style);

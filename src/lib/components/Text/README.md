@@ -61,8 +61,11 @@ Set these in `style`:
   declaration; PDFKit built-ins (`Helvetica`, `Times-Roman`, `Courier`, and
   their `-Bold`/`-Oblique` variants) work without one. See [Font](../Font/README.md).
 - `fontFamily` accepts a **fallback chain** (`['Inter', 'Helvetica']` or
-  `'Inter, Helvetica'`); the first registered/built-in family wins. This is
-  family-level fallback — per-glyph substitution is not yet supported.
+  `'Inter, Helvetica'`); the first registered/built-in family wins. The chain is
+  also a **per-glyph** fallback: each character is drawn by the first family that
+  has its glyph, so `['Inter', 'NotoSansSC']` keeps Latin in Inter and renders
+  CJK from Noto, without splitting accents or emoji. Colour emoji renders
+  monochrome (gated by PDFKit).
 - Justified text (`textAlign: 'justify'`) pairs well with `hyphenation: true`.
   See [Page breaks and flow control](../../../../README.md#page-breaks-and-flow-control).
 - Long text blocks split line-by-line across page boundaries automatically.

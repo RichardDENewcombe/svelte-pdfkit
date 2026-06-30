@@ -417,7 +417,14 @@ PDFKit's built-in fonts (`Helvetica`, `Helvetica-Bold`, `Helvetica-Oblique`, `Ti
 <Text text="Hello" style={{ fontFamily: 'Inter, Helvetica' }} />
 ```
 
-This is family-level fallback. Per-glyph substitution (using a fallback only for characters the primary font lacks) is not yet supported.
+**Per-glyph fallback:** the same list is applied per character — each glyph is drawn by the first family that actually has it, so a primarily-Latin font can fall back to a CJK or symbol font only for the code points it lacks, mid-run, without splitting grapheme clusters (accents, flag emoji):
+
+```svelte
+<!-- Latin stays in Inter; 世界 is rendered from Noto Sans SC -->
+<Text text="Hello 世界" style={{ fontFamily: ['Inter', 'NotoSansSC'] }} />
+```
+
+Measurement, wrapping, and justification all handle multi-font lines. Colour emoji (COLR/CBDT/sbix) renders monochrome — that is gated by PDFKit.
 
 ---
 

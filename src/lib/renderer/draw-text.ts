@@ -1,6 +1,7 @@
 import type { PDFNode } from '../types/pdf.js';
 import { resolveFontStack } from '../runtime/font-registry.js';
 import { wrapLinesMeta, type WrappedLine } from '../layout/text-measure.js';
+import { splitFontRuns, widthOfRuns, type FontRun } from '../layout/font-runs.js';
 
 export function drawText(
 	doc: any,
@@ -35,6 +36,14 @@ export function drawText(
 
 	doc.fontSize(fontSize);
 
+	// Per-glyph font fallback: if the text needs more than one font (e.g. a Latin
+	// primary plus a CJK fallback for code points it lacks), the whole text
+	// pipeline below — which assumes one font — can't be used as-is. We detect
+	// that here and route to the run-aware paths. Single-font text (the common
+	// case) is unaffected and takes the original PDFKit paths.
+	const multiFont =
+		splitFontRuns(text, style.fontFamily, style.fontWeight, style.fontStyle).length > 1;
+
 	// Justified text needs per-line handling: PDFKit's native `align: 'justify'`
 	// only stretches lines it wraps itself, but the paginator pre-wraps text and
 	// joins lines with '\n', which PDFKit reads as separate single-line
@@ -42,7 +51,14 @@ export function drawText(
 	// out each line ourselves and distribute the slack via wordSpacing, skipping
 	// the final line of every paragraph.
 	if (align === 'justify' && width > 0) {
-		drawJustified(doc, node, text, x, y, width, color, opacity, fontSize, style);
+		drawJustified(doc, node, text, x, y, width, color, opacity, fontSize, style, multiFont);
+		return;
+	}
+
+	// Mixed-font flow (non-justified): pre-wrap and draw each line's runs, since
+	// PDFKit's own wrapping can only apply a single font.
+	if (multiFont) {
+		drawMultiFontFlow(doc, text, x, y, width, color, opacity, fontSize, align, style);
 		return;
 	}
 
@@ -86,13 +102,11 @@ function drawJustified(
 	color: string,
 	opacity: number,
 	fontSize: number,
-	style: Record<string, any>
+	style: Record<string, any>,
+	multiFont = false
 ): void {
-	// Effective line advance: natural PDFKit line height × the lineHeight
-	// multiplier — matches measureText()/getLineHeight() so positions line up
-	// with the Yoga-computed box.
-	const lineAdvance = doc.currentLineHeight(true) * (style.lineHeight ?? 1);
 	const charSpacing = style.letterSpacing as number | undefined;
+	const widthOpts = charSpacing != null ? { characterSpacing: charSpacing } : undefined;
 
 	// Prefer the metadata the paginator carried through (it knows the true
 	// paragraph boundaries for split text); otherwise wrap the text here.
@@ -100,26 +114,176 @@ function drawJustified(
 		? node.props.justifyLines
 		: wrapLinesMeta(text, style, width);
 
+	// Effective line advance: natural PDFKit line height × the lineHeight
+	// multiplier — matches measureText()/getLineHeight() so positions line up
+	// with the Yoga-computed box. Multi-font lines use the tallest run font.
+	const lineAdvance = multiFont
+		? multiFontLineAdvance(doc, splitFontRuns(text, style.fontFamily, style.fontWeight, style.fontStyle), style)
+		: doc.currentLineHeight(true) * (style.lineHeight ?? 1);
+
 	doc.fillColor(color, opacity).fontSize(fontSize);
 
-	const widthOpts = charSpacing != null ? { characterSpacing: charSpacing } : undefined;
-
 	lines.forEach((line, i) => {
-		const opts: Record<string, any> = {
-			width,
-			lineBreak: false,
-			...(charSpacing != null && { characterSpacing: charSpacing }),
-			...(style.textDecoration === 'underline' && { underline: true }),
-			...(style.textDecoration === 'line-through' && { strike: true })
-		};
-
+		const lineY = y + i * lineAdvance;
 		const spaceCount = (line.text.match(/ /g) ?? []).length;
+
+		// Slack distributed across the line's spaces (skip the paragraph's final
+		// line and single-word lines, which keep their natural width).
+		let wordSpacing: number | undefined;
 		if (!line.lastInParagraph && spaceCount > 0) {
-			const natural = doc.widthOfString(line.text, widthOpts);
+			const natural = multiFont
+				? widthOfRuns(doc, splitFontRuns(line.text, style.fontFamily, style.fontWeight, style.fontStyle), widthOpts)
+				: doc.widthOfString(line.text, widthOpts);
 			const slack = width - natural;
-			if (slack > 0) opts.wordSpacing = slack / spaceCount;
+			if (slack > 0) wordSpacing = slack / spaceCount;
 		}
 
-		doc.text(line.text, x, y + i * lineAdvance, opts);
+		if (!multiFont) {
+			doc.text(line.text, x, lineY, {
+				width,
+				lineBreak: false,
+				...(charSpacing != null && { characterSpacing: charSpacing }),
+				...(style.textDecoration === 'underline' && { underline: true }),
+				...(style.textDecoration === 'line-through' && { strike: true }),
+				...(wordSpacing != null && { wordSpacing })
+			});
+			return;
+		}
+
+		// Multi-font line: draw each run at an explicit x, applying the same
+		// wordSpacing to every run so all of the line's spaces stretch evenly.
+		const runs = splitFontRuns(line.text, style.fontFamily, style.fontWeight, style.fontStyle);
+		drawRunsLine(doc, runs, x, lineY, {
+			charSpacing,
+			wordSpacing,
+			underline: style.textDecoration === 'underline',
+			strike: style.textDecoration === 'line-through'
+		});
+	});
+}
+
+/**
+ * Effective line advance for a multi-font line: the tallest run font's natural
+ * line height × the lineHeight multiplier. Mirrors the layout engine's
+ * measurement so rendered lines sit where the Yoga box expects them. Leaves the
+ * doc's current font set to one of the run fonts (callers re-set per run).
+ */
+function multiFontLineAdvance(doc: any, runs: FontRun[], style: Record<string, any>): number {
+	let natural = 0;
+	const seen = new Set<string>();
+	for (const run of runs) {
+		if (seen.has(run.font)) continue;
+		seen.add(run.font);
+		try {
+			doc.font(run.font);
+		} catch {
+			doc.font('Helvetica');
+		}
+		natural = Math.max(natural, doc.currentLineHeight(true));
+	}
+	return natural * (style.lineHeight ?? 1);
+}
+
+/**
+ * Draws one line's font runs left-to-right, each at an explicit x.
+ *
+ * We position runs manually rather than using PDFKit's `continued` chaining
+ * because PDFKit collapses whitespace at the seam between continued fragments,
+ * which visually merges words across a font boundary. Advancing x by each run's
+ * measured width (which counts a boundary space even when PDFKit doesn't paint
+ * the seam glyph) preserves the gap. `wordSpacing` widens the line's spaces for
+ * justification; it is added to the advance since widthOfString doesn't include
+ * it.
+ */
+function drawRunsLine(
+	doc: any,
+	runs: FontRun[],
+	startX: number,
+	lineY: number,
+	opts: {
+		charSpacing?: number;
+		wordSpacing?: number;
+		underline?: boolean;
+		strike?: boolean;
+	}
+): void {
+	const widthOpts = opts.charSpacing != null ? { characterSpacing: opts.charSpacing } : undefined;
+	let runX = startX;
+	for (const run of runs) {
+		doc.font(run.font).text(run.text, runX, lineY, {
+			lineBreak: false,
+			...(opts.charSpacing != null && { characterSpacing: opts.charSpacing }),
+			...(opts.wordSpacing != null && { wordSpacing: opts.wordSpacing }),
+			...(opts.underline && { underline: true }),
+			...(opts.strike && { strike: true })
+		});
+
+		let advance = doc.widthOfString(run.text, widthOpts);
+		if (opts.wordSpacing != null) {
+			const spaces = run.text.length - run.text.replace(/ /g, '').length;
+			advance += opts.wordSpacing * spaces;
+		}
+		runX += advance;
+	}
+}
+
+/**
+ * Renders non-justified text that spans multiple fonts. PDFKit can only apply a
+ * single font per `text()` call and per wrap pass, so we pre-wrap, split each
+ * line into per-font runs, and draw the runs ourselves. Alignment is applied by
+ * offsetting each line's start x by its measured width.
+ */
+function drawMultiFontFlow(
+	doc: any,
+	text: string,
+	x: number,
+	y: number,
+	width: number,
+	color: string,
+	opacity: number,
+	fontSize: number,
+	align: string,
+	style: Record<string, any>
+): void {
+	doc.fontSize(fontSize);
+
+	const lineAdvance = multiFontLineAdvance(
+		doc,
+		splitFontRuns(text, style.fontFamily, style.fontWeight, style.fontStyle),
+		style
+	);
+
+	// Pre-wrap to lines. With no width constraint, only hard newlines break.
+	const lineTexts =
+		width > 0
+			? wrapLinesMeta(text, style, width).map((l) => l.text)
+			: text.split('\n');
+
+	const charSpacing = style.letterSpacing as number | undefined;
+	const widthOpts = charSpacing != null ? { characterSpacing: charSpacing } : undefined;
+	doc.fillColor(color, opacity);
+
+	lineTexts.forEach((lineText, i) => {
+		const runs = splitFontRuns(lineText, style.fontFamily, style.fontWeight, style.fontStyle);
+
+		// Natural width of the line across its runs, for alignment offset.
+		let lineWidth = 0;
+		for (const run of runs) {
+			doc.font(run.font);
+			lineWidth += doc.widthOfString(run.text, widthOpts);
+		}
+
+		let lineX = x;
+		if (width > 0) {
+			if (align === 'center') lineX = x + (width - lineWidth) / 2;
+			else if (align === 'right') lineX = x + (width - lineWidth);
+		}
+		const lineY = y + i * lineAdvance;
+
+		drawRunsLine(doc, runs, lineX, lineY, {
+			charSpacing,
+			underline: style.textDecoration === 'underline',
+			strike: style.textDecoration === 'line-through'
+		});
 	});
 }

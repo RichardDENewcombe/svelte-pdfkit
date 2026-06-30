@@ -34,6 +34,7 @@
 	import View from '../components/View/View.svelte';
 	import Text from '../components/Text/Text.svelte';
 	import Image from '../components/Image/Image.svelte';
+	import Font from '../components/Font/Font.svelte';
 	import Table from '../components/Table/Table.svelte';
 	import Row from '../components/Table/Row.svelte';
 	import Cell from '../components/Table/Cell.svelte';
@@ -97,6 +98,18 @@
 		  '<rect x="112" y="56" width="52" height="10" rx="5" fill="#ffffff" opacity="0.6"/>' +
 		'</svg>';
 	const svgImage = 'data:image/svg+xml,' + encodeURIComponent(svgBadge);
+
+	// ── Glyph-level font fallback fonts ──────────────────────────────────────────
+	// Fetched from the Noto Fonts GitHub raw URLs at render time (cached after the
+	// first request). Noto Sans covers Latin (incl. accents like Nguyễn); Noto Sans
+	// SC covers the CJK code points Noto Sans lacks. Used as a fallback stack so each
+	// glyph is drawn by the first font in the list that actually has it.
+	const notoLatin =
+		'https://raw.githubusercontent.com/notofonts/notofonts.github.io/main/fonts/NotoSans/hinted/ttf/NotoSans-Regular.ttf';
+	const notoCJK =
+		'https://raw.githubusercontent.com/notofonts/noto-cjk/main/Sans/SubsetOTF/SC/NotoSansSC-Regular.otf';
+	// One mixed-script string reused across the comparison.
+	const mixedSample = 'Hello 世界 — 你好 from svelte-pdf · Nguyễn';
 </script>
 
 <!--
@@ -1579,6 +1592,157 @@
 		</View>
 
 	</View>
+
+	<!-- Fixed footer -->
+	<View
+		fixed={true}
+		style={{ position: 'absolute', bottom: 20, left: 40, right: 40, flexDirection: 'row', justifyContent: 'space-between' }}
+	>
+		<Text
+			text="Acme Corp · Confidential"
+			style={{ fontFamily: 'Helvetica-Oblique', fontSize: 8, color: muted }}
+		/>
+		<Text
+			render={pageFooter}
+			style={{ fontFamily: 'Helvetica', fontSize: 8, color: muted }}
+		/>
+	</View>
+
+</Page>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<!-- Glyph-Level Font Fallback page                                          -->
+<!--                                                                        -->
+<!-- Demonstrates per-character font substitution. A fontFamily list is a    -->
+<!-- per-glyph fallback chain: each character keeps the first font in the    -->
+<!-- list that has its glyph. Proof is by contrast — the same mixed-script   -->
+<!-- string rendered with the primary font alone (CJK shows as .notdef/tofu  -->
+<!-- boxes) beside the full stack (CJK filled from the fallback font).        -->
+<!--                                                                        -->
+<!-- Fonts are fetched from the Noto Fonts GitHub raw URLs at render time. If -->
+<!-- the network is unavailable the fetch fails gracefully (loadResources     -->
+<!-- warns, the renderer drops to Helvetica) and this page still renders a    -->
+<!-- valid PDF — the fallback column simply won't show the CJK glyphs.        -->
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<Page size="A4" style={{ padding: 40 }}>
+
+	<!--
+		Font declarations. <Font> is purely declarative (renders nothing); it
+		registers a remote font the rest of the page can reference by name.
+	-->
+	<Font name="NotoLatin" src={notoLatin} />
+	<Font name="NotoCJK" src={notoCJK} />
+
+	<!-- Title -->
+	<Text
+		text="Glyph-Level Font Fallback"
+		style={{ fontFamily: 'Helvetica-Bold', fontSize: 20, color: brand, marginBottom: 4 }}
+	/>
+	<Text
+		text="Mix scripts in one run: a fontFamily list acts as a per-character fallback chain, so each glyph is drawn by the first font in the list that actually has it."
+		style={{ fontFamily: 'Helvetica-Oblique', fontSize: 9, color: muted, marginBottom: 20 }}
+	/>
+
+	<!-- How it works -->
+	<Text
+		text="How it works"
+		style={{ fontFamily: 'Helvetica-Bold', fontSize: 11, color: brand, marginBottom: 6 }}
+	/>
+	<Text
+		text="Family-level fallback picks one font for an entire run. Glyph-level fallback goes further: it keeps the primary font for the glyphs it has and drops to the next font in the same list only for the code points the primary lacks — CJK, emoji, or rare symbols — without splitting grapheme clusters such as accents or flag emoji."
+		style={{ fontFamily: 'Helvetica', fontSize: 10, marginBottom: 16 }}
+	/>
+
+	<!-- Style prop reference -->
+	<View style={{ backgroundColor: subtle, padding: 12, borderRadius: 4, marginBottom: 20 }}>
+		<Text
+			text={"<Text style={{ fontFamily: ['NotoLatin', 'NotoCJK'] }}>Hello 世界</Text>"}
+			style={{ fontFamily: 'Courier', fontSize: 9, color: brand, marginBottom: 8 }}
+		/>
+		<Text
+			text="No new prop — the existing fontFamily list is the fallback chain. Colour emoji (COLR/sbix) renders monochrome; that is gated by PDFKit and out of scope here."
+			style={{ fontFamily: 'Helvetica-Oblique', fontSize: 8, color: muted }}
+		/>
+	</View>
+
+	<!-- ── Contrast: primary only vs full stack ───────────────────────────── -->
+	<Text
+		text="Primary font alone vs the full fallback stack"
+		style={{ fontFamily: 'Helvetica-Bold', fontSize: 11, color: brand, marginBottom: 4 }}
+	/>
+	<Text
+		text="Both panels render the same string. Left uses only the Latin font, so the CJK characters have no glyph and appear as .notdef boxes. Right adds the CJK font as a fallback, so those same characters are filled in — while the Latin text stays in the primary font."
+		style={{ fontFamily: 'Helvetica-Oblique', fontSize: 9, color: muted, marginBottom: 10 }}
+	/>
+	<View style={{ flexDirection: 'row', gap: 12, marginBottom: 20 }}>
+
+		<!-- Left: primary only — CJK is missing -->
+		<View style={{ flexGrow: 1, flexShrink: 1, flexBasis: 0, borderWidth: 1, borderColor: '#fca5a5', borderRadius: 4, padding: 10 }}>
+			<Text
+				text="fontFamily: 'NotoLatin'"
+				style={{ fontFamily: 'Courier', fontSize: 8, color: '#ef4444', marginBottom: 8 }}
+			/>
+			<Text
+				text={mixedSample}
+				style={{ fontFamily: 'NotoLatin', fontSize: 14, lineHeight: 1.4 }}
+			/>
+			<Text
+				text="Above: CJK glyphs missing (tofu)"
+				style={{ fontFamily: 'Helvetica-Oblique', fontSize: 8, color: muted, marginTop: 8 }}
+			/>
+		</View>
+
+		<!-- Right: full stack — CJK filled from the fallback -->
+		<View style={{ flexGrow: 1, flexShrink: 1, flexBasis: 0, borderWidth: 1, borderColor: '#86efac', borderRadius: 4, padding: 10 }}>
+			<Text
+				text="fontFamily: ['NotoLatin', 'NotoCJK']"
+				style={{ fontFamily: 'Courier', fontSize: 8, color: '#16a34a', marginBottom: 8 }}
+			/>
+			<Text
+				text={mixedSample}
+				style={{ fontFamily: ['NotoLatin', 'NotoCJK'], fontSize: 14, lineHeight: 1.4 }}
+			/>
+			<Text
+				text="Above: CJK filled from the fallback font"
+				style={{ fontFamily: 'Helvetica-Oblique', fontSize: 8, color: muted, marginTop: 8 }}
+			/>
+		</View>
+
+	</View>
+
+	<!-- ── Alignment: mixed runs across left / center / right ─────────────── -->
+	<Text
+		text="Mixed runs across alignments"
+		style={{ fontFamily: 'Helvetica-Bold', fontSize: 11, color: brand, marginBottom: 4 }}
+	/>
+	<Text
+		text="The fallback stack is measured and positioned correctly under every alignment — the font switches mid-line without disturbing layout."
+		style={{ fontFamily: 'Helvetica-Oblique', fontSize: 9, color: muted, marginBottom: 10 }}
+	/>
+	<View style={{ borderWidth: 1, borderColor: border, borderRadius: 4, padding: 10, marginBottom: 20 }}>
+		<Text
+			text={mixedSample}
+			style={{ fontFamily: ['NotoLatin', 'NotoCJK'], fontSize: 12, textAlign: 'left', marginBottom: 6 }}
+		/>
+		<Text
+			text={mixedSample}
+			style={{ fontFamily: ['NotoLatin', 'NotoCJK'], fontSize: 12, textAlign: 'center', marginBottom: 6 }}
+		/>
+		<Text
+			text={mixedSample}
+			style={{ fontFamily: ['NotoLatin', 'NotoCJK'], fontSize: 12, textAlign: 'right' }}
+		/>
+	</View>
+
+	<!-- ── Justified multi-font paragraph ─────────────────────────────────── -->
+	<Text
+		text="Justified, with per-glyph fallback"
+		style={{ fontFamily: 'Helvetica-Bold', fontSize: 11, color: brand, marginBottom: 6 }}
+	/>
+	<Text
+		text="Justification distributes slack across the whole line even where it switches fonts mid-line. The paragraph below mixes Latin and CJK — 世界 means world, 你好 means hello — and is stretched flush to both margins, while the final line keeps its natural width."
+		style={{ fontFamily: ['NotoLatin', 'NotoCJK'], fontSize: 11, textAlign: 'justify', lineHeight: 1.5 }}
+	/>
 
 	<!-- Fixed footer -->
 	<View

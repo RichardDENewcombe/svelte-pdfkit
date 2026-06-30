@@ -33,6 +33,7 @@
 		}
 	},
 	"dependencies": {
+		"fontkit": "1.9.0",
 		"hyphenation.en-gb": "^0.2.1",
 		"hyphenation.en-us": "^0.2.1",
 		"hypher": "^0.2.5",

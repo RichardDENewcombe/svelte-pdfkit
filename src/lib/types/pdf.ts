@@ -115,9 +115,14 @@ export type StyleProps = {
   fontSize?: number;
   /**
    * Font family name, or a fallback list (CSS-style comma string or array).
-   * Text uses the first family that is registered or a PDFKit built-in.
+   *
+   * The list is also a **per-glyph** fallback chain: each character is drawn by
+   * the first family that actually has a glyph for it, so a primarily-Latin font
+   * can fall back to e.g. a CJK font only for the code points it lacks — without
+   * splitting grapheme clusters (accents, flag emoji). Colour emoji renders
+   * monochrome (gated by PDFKit).
    * @example fontFamily: 'Inter'
-   * @example fontFamily: ['Inter', 'Helvetica']
+   * @example fontFamily: ['Inter', 'NotoSansSC'] // Latin from Inter, CJK from Noto
    * @example fontFamily: 'Inter, Helvetica'
    */
   fontFamily?: string | string[];

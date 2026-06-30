@@ -261,7 +261,9 @@ function sliceNode(
 	if (node.type === 'text' && typeof node.props.render !== 'function') {
 		const text = node.props.text != null ? String(node.props.text) : '';
 		const style = node.props.style ?? {};
-		const lineHeight = getLineHeight(style);
+		// Pass the text so multi-font lines are sized by their tallest font,
+		// matching measureText() so line slicing stays aligned with layout.
+		const lineHeight = getLineHeight(style, text);
 
 		if (lineHeight > 0) {
 			const lines = wrapLinesMeta(text, style, layout.width);

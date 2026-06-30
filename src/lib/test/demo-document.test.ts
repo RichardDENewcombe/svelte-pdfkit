@@ -34,9 +34,12 @@ describe('DemoDocument', () => {
 		expect(buffer.subarray(0, 5).toString()).toBe('%PDF-');
 		expect(buffer.toString('binary')).toContain('%%EOF');
 
-		// The document declares eight feature pages; pagination splits the
+		// The document declares nine feature pages; pagination splits the
 		// explicit-page-breaks page into three, so the rendered total is higher.
 		// Assert a generous lower bound so the test is robust to layout tweaks.
-		expect(pageCount(buffer)).toBeGreaterThanOrEqual(8);
-	}, 20_000);
+		expect(pageCount(buffer)).toBeGreaterThanOrEqual(9);
+		// The glyph-fallback page fetches an ~8 MB remote CJK font (cached after
+		// the first request); allow extra time, and rely on graceful degradation
+		// to a built-in font if the network is unavailable.
+	}, 60_000);
 });

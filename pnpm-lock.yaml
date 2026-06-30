@@ -11,6 +11,9 @@ importers:
 
   .:
     dependencies:
+      fontkit:
+        specifier: 1.9.0
+        version: 1.9.0
       hyphenation.en-gb:
         specifier: ^0.2.1
         version: 0.2.1

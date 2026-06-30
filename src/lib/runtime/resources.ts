@@ -2,6 +2,7 @@ import fs from 'node:fs/promises';
 import type { ResourceEntry } from '../types/pdf.js';
 import { registerFontOnMeasureDoc } from '../layout/text-measure.js';
 import { resolveFont, registerVariantName } from './font-registry.js';
+import { registerFontCoverage, clearFontCoverage } from './glyph-coverage.js';
 
 // Per-process caches. These survive across render() calls intentionally —
 // a font file or image that was loaded once doesn't need to be re-read from
@@ -46,10 +47,14 @@ export async function loadResources(resources: ResourceEntry[]): Promise<void> {
 				// measure doc has the exact same font names the renderer will use.
 				if (entry.name) {
 					const pdfkitName = resolveFont(entry.name, entry.weight, entry.fontStyle);
-					registerFontOnMeasureDoc(pdfkitName, fontCache.get(entry.src)!);
+					const buffer = fontCache.get(entry.src)!;
+					registerFontOnMeasureDoc(pdfkitName, buffer);
 					// Record the variant as available so font-fallback resolution can
 					// prefer it over later families in a fontFamily stack.
 					registerVariantName(pdfkitName);
+					// Parse the buffer for per-glyph coverage queries (glyph-level
+					// fallback) so each code point can pick the right font in the stack.
+					registerFontCoverage(pdfkitName, buffer);
 				}
 			}
 
@@ -125,4 +130,5 @@ export function getCacheStats(): { fonts: number; images: number } {
 export function clearCaches(): void {
 	fontCache.clear();
 	imageCache.clear();
+	clearFontCoverage();
 }

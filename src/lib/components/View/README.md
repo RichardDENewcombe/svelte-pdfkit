@@ -40,6 +40,39 @@ positions its children and can carry background, border, and spacing styles.
 
 See the [style reference](../../../../README.md#style-reference) for the full set.
 
+## Transforms
+
+`rotate` (degrees, clockwise), `scale` / `scaleX` / `scaleY`,
+`translateX` / `translateY` (points), and `skewX` / `skewY` (degrees) transform
+how the view is drawn. They are a render-time effect only — the layout box is
+unchanged, so surrounding flow is unaffected (exactly like CSS `transform`). The
+pivot is set by `transformOrigin`, defaulting to the view's centre. When several
+are combined they apply in the order translate → rotate → scale → skew.
+
+### `transformOrigin`
+
+Accepts one or two space-separated tokens, or an `[x, y]` point tuple. Tokens may
+be:
+
+- **Keywords** — `left` / `right` (x axis), `top` / `bottom` (y axis), `center`
+  (either axis).
+- **Percentages** — `'50%'` (of the box width on x, height on y).
+- **Point lengths** — `'10'`.
+
+Keyword resolution is **axis-aware and order-independent**, like CSS: `left` /
+`right` always set x and `top` / `bottom` always set y, so `'bottom right'` ===
+`'right bottom'`. `center` and numeric values fill whichever axis is still free,
+in source order. Any axis you don't specify defaults to centre — so a lone
+`'bottom'` means bottom-centre. Keywords are case-insensitive.
+
+```svelte
+<View style={{ rotate: 15 }}>centre pivot (default)</View>
+<View style={{ rotate: 15, transformOrigin: 'left top' }}>top-left pivot</View>
+<View style={{ rotate: 15, transformOrigin: 'bottom' }}>bottom-centre pivot</View>
+<View style={{ scale: 1.2, transformOrigin: '25% 75%' }}>percentage pivot</View>
+<View style={{ scale: 1.2, transformOrigin: [10, 20] }}>point pivot</View>
+```
+
 ## Flow control
 
 `fixed`, `wrap`, `breakBefore`, `breakAfter`, and `keepWithNext` control how the

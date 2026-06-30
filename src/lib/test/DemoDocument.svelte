@@ -286,6 +286,155 @@
 </Page>
 
 <!-- ══════════════════════════════════════════════════════════════════════ -->
+<!-- Transforms page                                                        -->
+<!--                                                                        -->
+<!-- Demonstrates the rotate / scale / translate / skew style props on      -->
+<!-- layout nodes (View, Text, Image). Transforms are a render-time effect  -->
+<!-- only: the layout box is unchanged, so each demo tile reserves its full  -->
+<!-- slot while its content is visually transformed about transformOrigin    -->
+<!-- (default: the node's centre).                                          -->
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<Page size="A4" style={{ padding: 40 }}>
+
+	<!-- Title -->
+	<Text
+		text="Transforms"
+		style={{ fontFamily: 'Helvetica-Bold', fontSize: 20, color: brand, marginBottom: 4 }}
+	/>
+	<Text
+		text="Rotate, scale, translate, and skew any View, Text, or Image with the transform style props. Transforms affect drawing only — not layout — and pivot about transformOrigin (default: centre)."
+		style={{ fontFamily: 'Helvetica-Oblique', fontSize: 9, color: muted, marginBottom: 20 }}
+	/>
+
+	<!-- ── Rotate ─────────────────────────────────────────────────────────── -->
+	<Text text="rotate" style={{ fontFamily: 'Helvetica-Bold', fontSize: 11, color: brand, marginBottom: 8 }} />
+	<View style={{ flexDirection: 'row', gap: 24, marginBottom: 24, height: 80, alignItems: 'center' }}>
+		{#each [0, 15, 45, 90] as deg}
+			<View style={{ width: 70, height: 40, backgroundColor: '#dbeafe', borderWidth: 1, borderColor: brand, borderRadius: 4, alignItems: 'center', justifyContent: 'center', rotate: deg }}>
+				<Text text={`${deg}°`} style={{ fontFamily: 'Helvetica-Bold', fontSize: 10, color: brand }} />
+			</View>
+		{/each}
+	</View>
+
+	<!-- ── Scale ──────────────────────────────────────────────────────────── -->
+	<Text text="scale / scaleX / scaleY" style={{ fontFamily: 'Helvetica-Bold', fontSize: 11, color: brand, marginBottom: 8 }} />
+	<View style={{ flexDirection: 'row', gap: 28, marginBottom: 24, height: 70, alignItems: 'center' }}>
+		<View style={{ width: 60, height: 40, backgroundColor: '#fef9c3', borderWidth: 1, borderColor: '#ca8a04', borderRadius: 4, scale: 0.6 }} />
+		<View style={{ width: 60, height: 40, backgroundColor: '#fef9c3', borderWidth: 1, borderColor: '#ca8a04', borderRadius: 4 }} />
+		<View style={{ width: 60, height: 40, backgroundColor: '#fef9c3', borderWidth: 1, borderColor: '#ca8a04', borderRadius: 4, scaleX: 1.4 }} />
+		<View style={{ width: 60, height: 40, backgroundColor: '#fef9c3', borderWidth: 1, borderColor: '#ca8a04', borderRadius: 4, scaleY: 1.4 }} />
+	</View>
+
+	<!-- ── Translate ──────────────────────────────────────────────────────── -->
+	<Text text="translateX / translateY" style={{ fontFamily: 'Helvetica-Bold', fontSize: 11, color: brand, marginBottom: 8 }} />
+	<Text
+		text="The outlined box shows the original (untransformed) layout slot; the solid tile is translated out of it."
+		style={{ fontFamily: 'Helvetica-Oblique', fontSize: 8, color: muted, marginBottom: 8 }}
+	/>
+	<View style={{ flexDirection: 'row', gap: 40, marginBottom: 24, height: 70 }}>
+		<View style={{ width: 60, height: 50, borderWidth: 1, borderColor: border, borderRadius: 4 }}>
+			<View style={{ width: 60, height: 50, backgroundColor: '#dcfce7', borderWidth: 1, borderColor: '#16a34a', borderRadius: 4, translateX: 20, translateY: 12 }} />
+		</View>
+	</View>
+
+	<!-- ── Skew ───────────────────────────────────────────────────────────── -->
+	<Text text="skewX / skewY" style={{ fontFamily: 'Helvetica-Bold', fontSize: 11, color: brand, marginBottom: 8 }} />
+	<View style={{ flexDirection: 'row', gap: 36, marginBottom: 24, height: 60, alignItems: 'center' }}>
+		<View style={{ width: 70, height: 40, backgroundColor: '#fce7f3', borderWidth: 1, borderColor: '#db2777', skewX: 20 }} />
+		<View style={{ width: 70, height: 40, backgroundColor: '#fce7f3', borderWidth: 1, borderColor: '#db2777', skewY: 12 }} />
+	</View>
+
+	<!-- Fixed footer -->
+	<View
+		fixed={true}
+		style={{ position: 'absolute', bottom: 20, left: 40, right: 40, flexDirection: 'row', justifyContent: 'space-between' }}
+	>
+		<Text
+			text="Acme Corp · Confidential"
+			style={{ fontFamily: 'Helvetica-Oblique', fontSize: 8, color: muted }}
+		/>
+		<Text
+			render={pageFooter}
+			style={{ fontFamily: 'Helvetica', fontSize: 8, color: muted }}
+		/>
+	</View>
+
+</Page>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<!-- transformOrigin page                                                   -->
+<!--                                                                        -->
+<!-- A 3×3 grid of every keyword origin, each tile given the same rotation   -->
+<!-- so the pivot point's effect is directly comparable. Relies on flexWrap   -->
+<!-- to break the nine cells into three rows.                                -->
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<Page size="A4" style={{ padding: 40 }}>
+
+	<!-- Title -->
+	<Text
+		text="transformOrigin"
+		style={{ fontFamily: 'Helvetica-Bold', fontSize: 20, color: brand, marginBottom: 4 }}
+	/>
+	<Text
+		text="The pivot a transform turns about. Below: the same 40° rotation applied with each of the nine keyword origins, so you can see where each one anchors. left/right set the x axis, top/bottom set y — in any order — and any axis you omit defaults to centre."
+		style={{ fontFamily: 'Helvetica-Oblique', fontSize: 9, color: muted, marginBottom: 20 }}
+	/>
+
+	<!-- 3×3 grid: each pale cell is the untransformed layout slot; the solid
+	     tile inside is rotated about the labelled origin. flexWrap breaks the
+	     nine 160pt cells into rows of three within the ~515pt content width. -->
+	<View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 15 }}>
+		{#each ['left top', 'center top', 'right top', 'left center', 'center', 'right center', 'left bottom', 'center bottom', 'right bottom'] as origin}
+			<View style={{ width: 161, height: 110, backgroundColor: '#faf5ff', borderWidth: 0.5, borderColor: '#ddd6fe', borderRadius: 4, alignItems: 'center', justifyContent: 'center' }}>
+				<View style={{ width: 110, height: 40, backgroundColor: '#ddd6fe', borderWidth: 1, borderColor: '#7c3aed', borderRadius: 3, alignItems: 'center', justifyContent: 'center', rotate: 40, transformOrigin: origin }}>
+					<Text text={origin} style={{ fontFamily: 'Helvetica-Bold', fontSize: 9, color: '#5b21b6' }} />
+				</View>
+			</View>
+		{/each}
+	</View>
+
+	<!-- Equivalent non-keyword forms -->
+	<View style={{ marginTop: 24, backgroundColor: subtle, padding: 12, borderRadius: 4 }}>
+		<Text
+			text="Equivalent forms"
+			style={{ fontFamily: 'Helvetica-Bold', fontSize: 10, color: brand, marginBottom: 6 }}
+		/>
+		<Text
+			text={"transformOrigin: 'bottom'         — same as 'center bottom' (omitted x axis → centre)"}
+			style={{ fontFamily: 'Courier', fontSize: 9, color: brand, marginBottom: 3 }}
+		/>
+		<Text
+			text={"transformOrigin: 'bottom right'   — same as 'right bottom' (keywords are order-independent)"}
+			style={{ fontFamily: 'Courier', fontSize: 9, color: brand, marginBottom: 3 }}
+		/>
+		<Text
+			text={"transformOrigin: '50% 100%'       — percentages of the box; matches 'center bottom'"}
+			style={{ fontFamily: 'Courier', fontSize: 9, color: brand, marginBottom: 3 }}
+		/>
+		<Text
+			text={"transformOrigin: [10, 20]         — an exact point pivot in the box's coordinates"}
+			style={{ fontFamily: 'Courier', fontSize: 9, color: brand }}
+		/>
+	</View>
+
+	<!-- Fixed footer -->
+	<View
+		fixed={true}
+		style={{ position: 'absolute', bottom: 20, left: 40, right: 40, flexDirection: 'row', justifyContent: 'space-between' }}
+	>
+		<Text
+			text="Acme Corp · Confidential"
+			style={{ fontFamily: 'Helvetica-Oblique', fontSize: 8, color: muted }}
+		/>
+		<Text
+			render={pageFooter}
+			style={{ fontFamily: 'Helvetica', fontSize: 8, color: muted }}
+		/>
+	</View>
+
+</Page>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
 <!-- Orphan & Widow Control page                                            -->
 <!--                                                                        -->
 <!-- Demonstrates the orphans / widows style props.                         -->

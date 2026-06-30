@@ -724,6 +724,25 @@ All layout components accept a `style` prop typed as `StyleProps`.
 | `borderRadius`                                                                                        | number (points)  |
 | `borderTopLeftRadius` / `borderTopRightRadius` / `borderBottomLeftRadius` / `borderBottomRightRadius` | number           |
 
+### Transform
+
+Transforms change how a node (`<View>`, `<Text>`, `<Image>`) is drawn without affecting its layout box — surrounding flow is unchanged, exactly like CSS `transform`. When combined, they apply in the order translate → rotate → scale → skew, about `transformOrigin` (default: the node's centre).
+
+| Property                      | Type                                                          |
+| ----------------------------- | ------------------------------------------------------------ |
+| `rotate`                      | number (degrees, clockwise)                                  |
+| `scale` / `scaleX` / `scaleY` | number (factor)                                              |
+| `translateX` / `translateY`   | number (points)                                              |
+| `skewX` / `skewY`             | number (degrees)                                             |
+| `transformOrigin`             | one or two tokens, or an `[x, y]` tuple (default: centre) |
+
+`transformOrigin` tokens are keywords (`left`/`right` → x, `top`/`bottom` → y, `center`), percentages (`'50%'`), or point lengths. Keywords are axis-aware and order-independent like CSS — `'bottom right'` === `'right bottom'`, a lone `'bottom'` is bottom-centre, and any unspecified axis defaults to centre.
+
+```svelte
+<View style={{ rotate: 15, transformOrigin: 'left top' }}>…</View>
+<View style={{ rotate: 15, transformOrigin: 'bottom' }}>…</View>
+```
+
 ---
 
 ## Fixed elements (headers and footers)

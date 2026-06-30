@@ -55,6 +55,10 @@ Set these in `style`:
 | `hyphenation`    | `boolean` — break overflowing words (default `false`) |
 | `hyphenationLang`| `'en-gb'` (default) `'en-us'` or a registered language |
 
+`<Text>` also accepts the transform style props — `rotate`, `scale`/`scaleX`/`scaleY`,
+`translateX`/`translateY`, `skewX`/`skewY`, and `transformOrigin` — which affect
+drawing only, not layout. See the [View README](../View/README.md#transforms).
+
 ## Notes
 
 - **Fonts must be declared before use.** Custom families need a `<Font>`

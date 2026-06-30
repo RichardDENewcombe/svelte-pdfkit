@@ -130,6 +130,39 @@ export type StyleProps = {
   fontStyle?: "normal" | "italic";
   color?: string;
   opacity?: number;
+  /**
+   * Rotation in degrees (clockwise) about `transformOrigin`. Transforms are a
+   * render-time effect only — they do not change the node's layout box, exactly
+   * like CSS `transform`.
+   */
+  rotate?: number;
+  /** Uniform scale factor about `transformOrigin`. */
+  scale?: number;
+  /** Horizontal scale factor about `transformOrigin`. */
+  scaleX?: number;
+  /** Vertical scale factor about `transformOrigin`. */
+  scaleY?: number;
+  /** Horizontal translation in points. */
+  translateX?: number;
+  /** Vertical translation in points. */
+  translateY?: number;
+  /** Horizontal skew angle in degrees. */
+  skewX?: number;
+  /** Vertical skew angle in degrees. */
+  skewY?: number;
+  /**
+   * Pivot for `rotate` / `scale` / `skew`. One or two space-separated tokens, or
+   * an `[x, y]` point tuple. Tokens are keywords (`left`/`right` set x,
+   * `top`/`bottom` set y, `center` either), percentages (`'50%'`), or point
+   * lengths.
+   *
+   * Keyword resolution is axis-aware and order-independent like CSS: so
+   * `'bottom right'` === `'right bottom'`, a lone `'bottom'` is bottom-center,
+   * and `center`/numeric values fill whichever axis is still free (in source
+   * order). Any unspecified axis defaults to center, which is also the default
+   * when `transformOrigin` is omitted. Keywords are case-insensitive.
+   */
+  transformOrigin?: string | [number, number];
   textAlign?: "left" | "center" | "right" | "justify";
   /** Line height multiplier. 1 = natural, 1.5 = 150% of the font's natural line height. */
   lineHeight?: number;

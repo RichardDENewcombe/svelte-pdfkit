@@ -48,5 +48,8 @@ Set `width` and/or `height` in `style`:
   warning.
 - For inline vector drawing authored as components (rather than an image file),
   use the [SVG components](../Svg/README.md) instead.
+- Supports the transform style props (`rotate`, `scale`, `translateX`/`Y`,
+  `skewX`/`Y`, `transformOrigin`) — drawing only, not layout. See the
+  [View README](../View/README.md#transforms).
 
 See the [top-level README](../../../../README.md) for the full guide.

@@ -1,4 +1,4 @@
-import Yoga, { FlexDirection, Edge, Align, Justify, Direction, Gutter, PositionType } from 'yoga-layout';
+import Yoga, { FlexDirection, Edge, Align, Justify, Direction, Gutter, PositionType, Wrap } from 'yoga-layout';
 import type { DocumentContext, LayoutBox, PDFNode } from '../types/pdf.js';
 import { measureText } from './text-measure.js';
 import { imageAspectRatio } from './image-size.js';
@@ -160,6 +160,7 @@ function applyStyle(yogaNode: any, node: PDFNode): void {
 	if (s.flexGrow != null) yogaNode.setFlexGrow(s.flexGrow);
 	if (s.flexShrink != null) yogaNode.setFlexShrink(s.flexShrink);
 	if (s.flexBasis != null) yogaNode.setFlexBasis(s.flexBasis);
+	if (s.flexWrap != null) yogaNode.setFlexWrap(s.flexWrap === 'wrap' ? Wrap.Wrap : Wrap.NoWrap);
 	if (s.alignItems != null) yogaNode.setAlignItems(alignMap[s.alignItems] ?? Align.Stretch);
 	if (s.alignSelf != null) yogaNode.setAlignSelf(alignMap[s.alignSelf] ?? Align.Auto);
 	if (s.justifyContent != null)

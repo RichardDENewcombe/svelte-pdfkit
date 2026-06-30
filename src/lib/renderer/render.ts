@@ -5,6 +5,7 @@ import { resolveFont } from '../runtime/font-registry.js';
 import { drawText } from './draw-text.js';
 import { drawImage } from './draw-image.js';
 import { drawSvg } from './draw-svg.js';
+import { hasTransform, buildTransformMatrix } from './transform.js';
 
 const _require = createRequire(import.meta.url);
 
@@ -60,6 +61,19 @@ function drawRoundedRectPath(
 
 function drawNodes(doc: any, nodes: PDFNode[], pageNumber = 1, totalPages = 1): void {
 	for (const node of nodes) {
+		// Apply any transform (rotate/scale/translate/skew) around the node's own
+		// draw and its child subtree, matching CSS. Transforms don't affect layout,
+		// so the box coordinates below are unchanged — only the CTM is.
+		const style = node.props.style ?? {};
+		const transformed = !!node.layout && hasTransform(style);
+		if (transformed) {
+			doc.save();
+			doc.transform(...buildTransformMatrix(style, node.layout!));
+		}
+
+		// SVG draws its own children, so it must skip the generic recursion below.
+		let skipChildren = false;
+
 		switch (node.type) {
 			case 'view': {
 				// Draw background fill and/or border before rendering children.
@@ -133,10 +147,15 @@ function drawNodes(doc: any, nodes: PDFNode[], pageNumber = 1, totalPages = 1): 
 			case 'svg':
 				drawSvg(doc, node);
 				// SVG handles its own children — do not fall through to the generic recurse.
-				continue;
+				skipChildren = true;
+				break;
 		}
-		if (node.children.length > 0) {
+		if (!skipChildren && node.children.length > 0) {
 			drawNodes(doc, node.children, pageNumber, totalPages);
+		}
+
+		if (transformed) {
+			doc.restore();
 		}
 	}
 }

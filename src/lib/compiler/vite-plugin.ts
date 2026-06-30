@@ -230,7 +230,12 @@ export function sveltePDF(): Plugin {
 			// the PDF AST via getContext/setContext side effects.
 			const compiled = compile(source, {
 				filename: filePath,
-				generate: 'server'
+				generate: 'server',
+				// svelte-pdf templates run once during server-side render to build a
+				// static AST — they never re-render reactively, so reading a prop's
+				// initial value at init is correct and `state_referenced_locally`
+				// does not apply. Mirrors the filter in svelte.config.js.
+				warningFilter: (warning) => warning.code !== 'state_referenced_locally'
 			});
 
 			// Forward any Svelte compiler warnings to Vite's warning system

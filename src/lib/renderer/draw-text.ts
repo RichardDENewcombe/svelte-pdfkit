@@ -139,8 +139,13 @@ function drawJustified(
 		}
 
 		if (!multiFont) {
+			// Deliberately omit `width`. We already position the line at an explicit
+			// x and stretch it to the box via wordSpacing, so a width constraint
+			// serves no purpose — and is actively harmful: PDFKit re-wraps a line
+			// that meets/exceeds `width` even with lineBreak:false, stranding the
+			// last word on a second visual line that overlaps the line below. (The
+			// multi-font path below has never passed width, for the same reason.)
 			doc.text(line.text, x, lineY, {
-				width,
 				lineBreak: false,
 				...(charSpacing != null && { characterSpacing: charSpacing }),
 				...(style.textDecoration === 'underline' && { underline: true }),

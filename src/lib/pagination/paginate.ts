@@ -212,6 +212,22 @@ function paginatePage(page: PDFNode): PDFNode[] {
 	return outputPages;
 }
 
+/**
+ * True when a node paints a box (background or any border) that must be cut
+ * cleanly where it crosses a page boundary, rather than redrawn whole on each
+ * fragment.
+ */
+function hasBoxDecoration(style: Record<string, any>): boolean {
+	return !!(
+		style.backgroundColor ||
+		style.borderWidth ||
+		style.borderTopWidth ||
+		style.borderRightWidth ||
+		style.borderBottomWidth ||
+		style.borderLeftWidth
+	);
+}
+
 // ── Tree slicing ──────────────────────────────────────────────────────────────
 
 /**
@@ -369,13 +385,48 @@ function sliceNode(
 		return null;
 	}
 
-	// On overflow pages a container may have started on the previous page
-	// (adjustedLayout.y < yOffset, i.e. before the top padding).  Clamp its y
-	// to yOffset and grow the height to cover all of its sliced children so
-	// the border / background renders around the actual visible content rather
-	// than mostly off the top of the page.
+	// A bordered / filled box that straddles this slot's boundaries is cut, not
+	// redrawn whole. We clamp it to the slot and flag the cut edge(s) so the
+	// renderer suppresses the border (and corner radii) there — the box then
+	// reads as one continuous shape the page break passes through, matching
+	// react-pdf's splitNode(). nodeTop/nodeBottom are in original Yoga space;
+	// the slot spans [yStart, yEnd], which maps to [yOffset, yEnd-yStart+yOffset]
+	// in this page's adjusted coordinates.
+	const decorated = hasBoxDecoration(node.props.style ?? {});
+	const cutTop = decorated && nodeTop < yStart;
+	const cutBottom = decorated && nodeBottom > yEnd;
+
 	let effectiveLayout = adjustedLayout;
-	if (slicedChildren.length > 0 && adjustedLayout.y < yOffset) {
+	if (cutTop || cutBottom) {
+		const style = node.props.style ?? {};
+		const slotTopAdj = yOffset;
+		const slotBotAdj = yEnd - yStart + yOffset;
+		const top = cutTop ? slotTopAdj : adjustedLayout.y;
+		let bottom = cutBottom ? slotBotAdj : adjustedLayout.y + adjustedLayout.height;
+
+		// On a real-bottom fragment (the box actually ends on this page), make sure
+		// the box wraps its sliced children plus its own bottom padding + border.
+		// Orphan/widow control can defer a child to a later page and reposition it
+		// to the top of the content band, so the child no longer sits where Yoga
+		// placed it relative to the box — without this the bottom border can cut
+		// through the deferred text.
+		if (!cutBottom) {
+			const padBottom = style.paddingBottom ?? style.padding ?? 0;
+			const borderBottom = style.borderBottomWidth ?? style.borderWidth ?? 0;
+			const childrenBottom = slicedChildren.reduce((max, child) => {
+				if (!child.layout) return max;
+				return Math.max(max, child.layout.y + child.layout.height);
+			}, top);
+			bottom = Math.max(bottom, childrenBottom + padBottom + borderBottom);
+		}
+
+		effectiveLayout = { ...adjustedLayout, y: top, height: Math.max(bottom - top, 0) };
+	} else if (slicedChildren.length > 0 && adjustedLayout.y < yOffset) {
+		// On overflow pages an (undecorated) container may have started on the
+		// previous page (adjustedLayout.y < yOffset, i.e. before the top padding).
+		// Clamp its y to yOffset and grow the height to cover all of its sliced
+		// children so it renders around the actual visible content rather than
+		// mostly off the top of the page.
 		const maxChildBottom = slicedChildren.reduce((max, child) => {
 			if (!child.layout) return max;
 			return Math.max(max, child.layout.y + child.layout.height);
@@ -387,7 +438,12 @@ function sliceNode(
 		};
 	}
 
-	return { ...node, layout: effectiveLayout, children: slicedChildren };
+	const newProps =
+		cutTop || cutBottom
+			? { ...node.props, ...(cutTop && { __cutTop: true }), ...(cutBottom && { __cutBottom: true }) }
+			: node.props;
+
+	return { ...node, props: newProps, layout: effectiveLayout, children: slicedChildren };
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────

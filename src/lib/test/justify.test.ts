@@ -15,6 +15,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { createRequire } from 'node:module';
 import { createDocument } from '../runtime/document.js';
 import { paginate } from '../pagination/paginate.js';
 import { getLineHeight, wrapLinesMeta } from '../layout/text-measure.js';
@@ -255,6 +256,48 @@ describe('drawText – justified rendering', () => {
 		// width 120, natural = "aa bb cc".length(8) * 6 = 48, slack = 72,
 		// 2 spaces → wordSpacing = 36.
 		expect(doc.calls[0].opts.wordSpacing).toBeCloseTo(36, 5);
+	});
+
+	it('never passes a width constraint to text() (PDFKit re-wraps a full line despite lineBreak:false)', () => {
+		const doc = fakeDoc();
+		// A justified line stretched to exactly the box width sits on the wrap
+		// boundary. If width were passed, PDFKit would wrap the trailing word onto
+		// a second visual line — even with lineBreak:false — and it would overlap
+		// the next line. The single-font path must therefore omit `width` entirely,
+		// matching the multi-font path which positions runs explicitly.
+		const node = justifiedNode('aa bb cc', [{ text: 'aa bb cc', lastInParagraph: false }]);
+		drawText(doc, node);
+		expect(doc.calls[0].opts.width).toBeUndefined();
+		expect(doc.calls[0].opts.lineBreak).toBe(false);
+	});
+
+	it('does not let a full-width justified line re-wrap (real PDFKit)', () => {
+		const _require = createRequire(import.meta.url);
+		const PDFDocument = _require('pdfkit');
+		const doc = new PDFDocument({ autoFirstPage: false });
+		doc.addPage();
+
+		// natural width ≈ 222 in Helvetica @10pt — a hair wider than the 220 box.
+		// With the old `width` option PDFKit wrapped "while" onto a second line
+		// (cursor advances ~2 line heights); without it the line draws once.
+		const width = 220;
+		const text = 'The quick brown fox jumps over the lazy dog while';
+		const node: PDFNode = {
+			type: 'text',
+			props: {
+				text,
+				style: { fontSize: 10, fontFamily: 'Helvetica', textAlign: 'justify' },
+				justifyLines: [{ text, lastInParagraph: false }]
+			},
+			children: [],
+			layout: { x: 40, y: 100, width, height: 50 }
+		};
+
+		drawText(doc, node);
+
+		const lh = doc.currentLineHeight(true);
+		// One line drawn ⇒ cursor advanced by ~one line height, not two.
+		expect(doc.y - 100).toBeLessThan(lh * 1.5);
 	});
 
 	it('falls back to the normal path when width is 0', () => {

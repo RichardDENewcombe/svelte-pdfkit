@@ -85,6 +85,14 @@
 	const border = '#d1d5db';
 	const muted  = '#6b7280';
 
+	// A paragraph long enough to overflow a page, used to show a bordered,
+	// background-filled box being cut cleanly where it crosses the page break.
+	const spanningParagraph = Array.from(
+		{ length: 9 },
+		(_, i) =>
+			`(${i + 1}) When a filled and bordered container is taller than the space left on a page, the paginator splits it across the boundary and the renderer suppresses the border on the cut edge — so the box opens at the bottom of one page and continues, seamlessly, at the top of the next rather than closing and reopening as two separate boxes.`
+	).join(' ');
+
 	// ── SVG image source ─────────────────────────────────────────────────────────
 	// A 2:1 (200×100) badge rendered via <Image src="data:image/svg+xml,...">.
 	// SVG images are drawn as vectors (crisp at any scale) by svg-to-pdfkit, and
@@ -532,12 +540,16 @@
 		<View style={{ flexGrow: 1, flexShrink: 1, flexBasis: 0 }}>
 			<!--
 				Spacer pushes the demo paragraph close to the page boundary.
-				With the content above this section ~536 pt tall, page content
-				area 762 pt (842 − 2×40 padding), a spacer of ~235 pt places
-				exactly ~1 line of the paragraph before the page break — the
-				orphan scenario.  Adjust if the surrounding content changes.
+				The body paragraph starts at y ≈ 473.7 + spacer; the page break
+				sits at y = 802 (842 − 40 bottom padding). A 308 pt spacer places
+				the paragraph start at y ≈ 781.7, leaving room for exactly one
+				line before the break — the orphan scenario. The left column
+				(orphans: 1) keeps that single orphaned line at the foot of the
+				page; the right column (orphans: 2) defers the whole paragraph to
+				the next page. Verified working range is ~305–311 pt; adjust if
+				the content above this section changes height.
 			-->
-			<View style={{ height: 235 }} />
+			<View style={{ height: 308 }} />
 			<View style={{ borderWidth: 1, borderColor: '#fca5a5', borderRadius: 4, padding: 8 }}>
 				<Text
 					text="orphans: 1 — control disabled"
@@ -552,7 +564,9 @@
 
 		<!-- Right: orphans: 2 -->
 		<View style={{ flexGrow: 1, flexShrink: 1, flexBasis: 0 }}>
-			<View style={{ height: 235 }} />
+			<!-- Same 308 pt spacer as the left column so both paragraphs reach the
+			     page boundary together (see the note on the left spacer above). -->
+			<View style={{ height: 308 }} />
 			<View style={{ borderWidth: 1, borderColor: '#86efac', borderRadius: 4, padding: 8 }}>
 				<Text
 					text="orphans: 2 — orphan prevented"
@@ -565,6 +579,86 @@
 			</View>
 		</View>
 
+	</View>
+
+	<!-- Fixed footer -->
+	<View
+		fixed={true}
+		style={{ position: 'absolute', bottom: 20, left: 40, right: 40, flexDirection: 'row', justifyContent: 'space-between' }}
+	>
+		<Text
+			text="Acme Corp · Confidential"
+			style={{ fontFamily: 'Helvetica-Oblique', fontSize: 8, color: muted }}
+		/>
+		<Text
+			render={pageFooter}
+			style={{ fontFamily: 'Helvetica', fontSize: 8, color: muted }}
+		/>
+	</View>
+
+</Page>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<!-- Boxes across a page break                                              -->
+<!--                                                                        -->
+<!-- Demonstrates clean border/background cutting when a styled container    -->
+<!-- straddles a page boundary.  The paginator flags the cut edge and the    -->
+<!-- renderer omits the border (and flattens the corner radii) there, so the -->
+<!-- box reads as one continuous shape the page break passes through — the   -->
+<!-- same model react-pdf uses.  Watch the bordered box below: its border    -->
+<!-- runs off the bottom of this page with no closing line, and resumes at   -->
+<!-- the top of the next page with no opening line.                          -->
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<Page size="A4" style={{ padding: 40 }}>
+
+	<!-- Title -->
+	<Text
+		text="Boxes Across Page Breaks"
+		style={{ fontFamily: 'Helvetica-Bold', fontSize: 20, color: brand, marginBottom: 4 }}
+	/>
+	<Text
+		text="A bordered or filled container that is taller than the remaining page space is split across the boundary. The border is cut — not redrawn — so the box stays visually continuous."
+		style={{ fontFamily: 'Helvetica-Oblique', fontSize: 9, color: muted, marginBottom: 16 }}
+	/>
+
+	<!-- What to look for -->
+	<Text
+		text="What to look for"
+		style={{ fontFamily: 'Helvetica-Bold', fontSize: 11, color: brand, marginBottom: 6 }}
+	/>
+	<View style={{ backgroundColor: subtle, padding: 12, borderRadius: 4, marginBottom: 16 }}>
+		<Text
+			text="• The box's left and right edges run all the way to the page edge at the break."
+			style={{ fontFamily: 'Helvetica', fontSize: 9, color: brand, marginBottom: 4 }}
+		/>
+		<Text
+			text="• No horizontal border line is drawn where the page splits (no false bottom, no false top)."
+			style={{ fontFamily: 'Helvetica', fontSize: 9, color: brand, marginBottom: 4 }}
+		/>
+		<Text
+			text="• Rounded corners appear only at the real top (page 1) and real bottom (final page)."
+			style={{ fontFamily: 'Helvetica', fontSize: 9, color: brand }}
+		/>
+	</View>
+
+	<!-- The spanning box: filled + bordered, long enough to overflow the page. -->
+	<View
+		style={{
+			backgroundColor: '#eff6ff',
+			borderWidth: 1.5,
+			borderColor: brand,
+			borderRadius: 10,
+			padding: 16
+		}}
+	>
+		<Text
+			text="Continuous bordered box"
+			style={{ fontFamily: 'Helvetica-Bold', fontSize: 11, color: brand, marginBottom: 8 }}
+		/>
+		<Text
+			text={spanningParagraph}
+			style={{ fontFamily: 'Helvetica', fontSize: 11, lineHeight: 1.5, color: '#1e3a8a' }}
+		/>
 	</View>
 
 	<!-- Fixed footer -->

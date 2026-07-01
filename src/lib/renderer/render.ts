@@ -59,6 +59,62 @@ function drawRoundedRectPath(
 		.closePath();
 }
 
+/**
+ * Builds the outline of a box whose top and/or bottom edge has been "cut" by a
+ * page break, as an OPEN path covering only the edges that should be stroked.
+ *
+ * When a bordered box splits across a page boundary we must not draw a border
+ * along the cut — that would render a false closing line on the first fragment
+ * and a false opening line on the continuation, making one box look like two.
+ * This mirrors react-pdf's splitNode(), which zeroes the border (and corner
+ * radii) on the cut edge of each fragment so the box reads as continuous.
+ *
+ * Left and right edges are always present (page breaks are horizontal). The cut
+ * edge's two corners are square (the caller passes zeroed radii there), so the
+ * sides simply run straight to the page boundary.
+ */
+function strokeCutBorderPath(
+	doc: any,
+	x: number,
+	y: number,
+	w: number,
+	h: number,
+	tl: number,
+	tr: number,
+	br: number,
+	bl: number,
+	cutTop: boolean,
+	cutBottom: boolean
+): void {
+	if (cutTop && cutBottom) {
+		// Middle fragment of a box spanning 3+ pages: only the two sides show.
+		doc.moveTo(x, y).lineTo(x, y + h);
+		doc.moveTo(x + w, y).lineTo(x + w, y + h);
+		return;
+	}
+
+	if (cutBottom) {
+		// Real top + both sides; open along the bottom cut (bl/br are 0).
+		doc
+			.moveTo(x, y + h)
+			.lineTo(x, y + tl)
+			.bezierCurveTo(x, y + tl - KAPPA * tl, x + tl - KAPPA * tl, y, x + tl, y)
+			.lineTo(x + w - tr, y)
+			.bezierCurveTo(x + w - tr + KAPPA * tr, y, x + w, y + tr - KAPPA * tr, x + w, y + tr)
+			.lineTo(x + w, y + h);
+		return;
+	}
+
+	// cutTop: real bottom + both sides; open along the top cut (tl/tr are 0).
+	doc
+		.moveTo(x, y)
+		.lineTo(x, y + h - bl)
+		.bezierCurveTo(x, y + h - bl + KAPPA * bl, x + bl - KAPPA * bl, y + h, x + bl, y + h)
+		.lineTo(x + w - br, y + h)
+		.bezierCurveTo(x + w - br + KAPPA * br, y + h, x + w, y + h - br + KAPPA * br, x + w, y + h - br)
+		.lineTo(x + w, y);
+}
+
 function drawNodes(doc: any, nodes: PDFNode[], pageNumber = 1, totalPages = 1): void {
 	for (const node of nodes) {
 		// Apply any transform (rotate/scale/translate/skew) around the node's own
@@ -82,11 +138,19 @@ function drawNodes(doc: any, nodes: PDFNode[], pageNumber = 1, totalPages = 1): 
 				if (node.layout && (s.backgroundColor || s.borderWidth || hasSideBorder)) {
 					const { x = 0, y = 0, width = 0, height = 0 } = node.layout;
 					doc.save();
+
+					// A box that straddles a page break is flagged by the paginator so
+					// we suppress the border (and flatten the radii) on the cut edge,
+					// matching react-pdf's splitNode(). The box then reads as one
+					// continuous shape the page boundary passes through.
+					const cutTop = node.props.__cutTop === true;
+					const cutBottom = node.props.__cutBottom === true;
+
 					const r = s.borderRadius ?? 0;
-					const tl  = s.borderTopLeftRadius     ?? r;
-					const tr  = s.borderTopRightRadius    ?? r;
-					const brr = s.borderBottomRightRadius ?? r;
-					const bl  = s.borderBottomLeftRadius  ?? r;
+					const tl  = cutTop    ? 0 : (s.borderTopLeftRadius     ?? r);
+					const tr  = cutTop    ? 0 : (s.borderTopRightRadius    ?? r);
+					const brr = cutBottom ? 0 : (s.borderBottomRightRadius ?? r);
+					const bl  = cutBottom ? 0 : (s.borderBottomLeftRadius  ?? r);
 
 					if (s.backgroundColor) {
 						drawRoundedRectPath(doc, x, y, width, height, tl, tr, brr, bl);
@@ -99,13 +163,18 @@ function drawNodes(doc: any, nodes: PDFNode[], pageNumber = 1, totalPages = 1): 
 						// This prevents the stroke from bleeding into adjacent sibling nodes.
 						drawRoundedRectPath(doc, x, y, width, height, tl, tr, brr, bl);
 						doc.clip();
-						drawRoundedRectPath(doc, x, y, width, height, tl, tr, brr, bl);
+						if (cutTop || cutBottom) {
+							strokeCutBorderPath(doc, x, y, width, height, tl, tr, brr, bl, cutTop, cutBottom);
+						} else {
+							drawRoundedRectPath(doc, x, y, width, height, tl, tr, brr, bl);
+						}
 						doc.lineWidth(s.borderWidth * 2).stroke(s.borderColor ?? 'black');
 					}
 
 					// Per-side borders — drawn as individual lines (no border-radius).
+					// The cut edge is skipped for the same reason as the uniform border.
 					const fallbackColor = s.borderColor ?? 'black';
-					if (s.borderTopWidth) {
+					if (s.borderTopWidth && !cutTop) {
 						doc.moveTo(x, y).lineTo(x + width, y)
 							.lineWidth(s.borderTopWidth).stroke(s.borderTopColor ?? fallbackColor);
 					}
@@ -113,7 +182,7 @@ function drawNodes(doc: any, nodes: PDFNode[], pageNumber = 1, totalPages = 1): 
 						doc.moveTo(x + width, y).lineTo(x + width, y + height)
 							.lineWidth(s.borderRightWidth).stroke(s.borderRightColor ?? fallbackColor);
 					}
-					if (s.borderBottomWidth) {
+					if (s.borderBottomWidth && !cutBottom) {
 						doc.moveTo(x, y + height).lineTo(x + width, y + height)
 							.lineWidth(s.borderBottomWidth).stroke(s.borderBottomColor ?? fallbackColor);
 					}

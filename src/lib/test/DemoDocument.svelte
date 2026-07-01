@@ -142,6 +142,7 @@
 		<View style={{ flexDirection: 'column', flexGrow: 1 }}>
 			<Text
 				text="INVOICE"
+				bookmark="Invoice"
 				style={{ fontFamily: 'Helvetica-Bold', fontSize: 28, color: brand }}
 			/>
 			<Text
@@ -175,9 +176,9 @@
 	</View>
 
 	<!-- ── Bill-to block ──────────────────────────────────────────────────── -->
-	<View style={{ marginTop: 8, padding: 12, backgroundColor: subtle, borderRadius: 4 }}>
+	<View bookmark="Bill To" style={{ marginTop: 8, padding: 12, backgroundColor: subtle, borderRadius: 4 }}>
 		<Text text="Bill To"           style={{ fontFamily: 'Helvetica-Bold', fontSize: 10, color: muted, marginBottom: 4 }} />
-		<Text text="Jane Smith"        style={{ fontFamily: 'Helvetica-Bold', fontSize: 11 }} />
+		<Text text="Jane Smith" bookmark="Jane Smith" style={{ fontFamily: 'Helvetica-Bold', fontSize: 11 }} />
 		<Text text="456 Oak Avenue"    style={{ fontFamily: 'Helvetica',      fontSize: 10 }} />
 		<Text text="Portland, OR 97201" style={{ fontFamily: 'Helvetica',     fontSize: 10 }} />
 	</View>
@@ -307,6 +308,7 @@
 	<!-- Title -->
 	<Text
 		text="Transforms"
+		bookmark="Transforms"
 		style={{ fontFamily: 'Helvetica-Bold', fontSize: 20, color: brand, marginBottom: 4 }}
 	/>
 	<Text
@@ -381,6 +383,7 @@
 	<!-- Title -->
 	<Text
 		text="transformOrigin"
+		bookmark="transformOrigin"
 		style={{ fontFamily: 'Helvetica-Bold', fontSize: 20, color: brand, marginBottom: 4 }}
 	/>
 	<Text
@@ -464,6 +467,7 @@
 	<!-- Title -->
 	<Text
 		text="Orphan & Widow Control"
+		bookmark="Orphan & Widow Control"
 		style={{ fontFamily: 'Helvetica-Bold', fontSize: 20, color: brand, marginBottom: 4 }}
 	/>
 	<Text
@@ -614,6 +618,7 @@
 	<!-- Title -->
 	<Text
 		text="Boxes Across Page Breaks"
+		bookmark="Boxes Across Page Breaks"
 		style={{ fontFamily: 'Helvetica-Bold', fontSize: 20, color: brand, marginBottom: 4 }}
 	/>
 	<Text
@@ -686,6 +691,7 @@
 	<!-- Title -->
 	<Text
 		text="SVG Feature Gallery"
+		bookmark="SVG Feature Gallery"
 		style={{ fontFamily: 'Helvetica-Bold', fontSize: 20, color: brand, marginBottom: 4 }}
 	/>
 	<Text
@@ -867,6 +873,7 @@
 	<!-- Title -->
 	<Text
 		text="Gradients & Clip Paths"
+		bookmark="Gradients & Clip Paths"
 		style={{ fontFamily: 'Helvetica-Bold', fontSize: 20, color: brand, marginBottom: 4 }}
 	/>
 	<Text
@@ -1095,6 +1102,7 @@
 	<!-- Title -->
 	<Text
 		text="Explicit Page Breaks"
+		bookmark="Explicit Page Breaks"
 		style={{ fontFamily: 'Helvetica-Bold', fontSize: 20, color: brand, marginBottom: 4 }}
 	/>
 	<Text
@@ -1260,6 +1268,7 @@
 	<!-- Title -->
 	<Text
 		text="Justified Text"
+		bookmark="Justified Text"
 		style={{ fontFamily: 'Helvetica-Bold', fontSize: 20, color: brand, marginBottom: 4 }}
 	/>
 	<Text
@@ -1372,6 +1381,7 @@
 	<!-- Title -->
 	<Text
 		text="Hyphenation"
+		bookmark="Hyphenation"
 		style={{ fontFamily: 'Helvetica-Bold', fontSize: 20, color: brand, marginBottom: 4 }}
 	/>
 	<Text
@@ -1520,6 +1530,7 @@
 	<!-- Title -->
 	<Text
 		text="Keep With Next"
+		bookmark="Keep With Next"
 		style={{ fontFamily: 'Helvetica-Bold', fontSize: 20, color: brand, marginBottom: 4 }}
 	/>
 	<Text
@@ -1608,6 +1619,7 @@
 	<!-- Title -->
 	<Text
 		text="SVG Text"
+		bookmark="SVG Text"
 		style={{ fontFamily: 'Helvetica-Bold', fontSize: 20, color: brand, marginBottom: 4 }}
 	/>
 	<Text
@@ -1773,6 +1785,7 @@
 	<!-- Title -->
 	<Text
 		text="Image Sources & Aspect Ratio"
+		bookmark="Image Sources & Aspect Ratio"
 		style={{ fontFamily: 'Helvetica-Bold', fontSize: 20, color: brand, marginBottom: 4 }}
 	/>
 	<Text
@@ -1879,6 +1892,7 @@
 	<!-- Title -->
 	<Text
 		text="Glyph-Level Font Fallback"
+		bookmark="Glyph-Level Font Fallback"
 		style={{ fontFamily: 'Helvetica-Bold', fontSize: 20, color: brand, marginBottom: 4 }}
 	/>
 	<Text

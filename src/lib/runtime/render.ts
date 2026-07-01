@@ -5,6 +5,7 @@ import { loadResources } from './resources.js';
 import { computeLayout } from '../layout/layout.js';
 import { paginate } from '../pagination/paginate.js';
 import { renderPDF } from '../renderer/render.js';
+import { assignBookmarkIds } from '../renderer/bookmarks.js';
 import { warn } from './warn.js';
 
 /**
@@ -34,6 +35,10 @@ export async function renderComponent(
 	if (pageCount === 0) {
 		warn('The rendered component contains no <Page> elements — the output PDF will be empty. Wrap your content in at least one <Page>.');
 	}
+
+	// Stamp bookmark ids before pagination so nodes sliced across page
+	// boundaries keep one identity for dedup during outline emission.
+	assignBookmarkIds(doc);
 
 	computeLayout(doc);
 	const pages = paginate(doc);

@@ -5,6 +5,7 @@ import { resolveFont } from '../runtime/font-registry.js';
 import { drawText } from './draw-text.js';
 import { drawImage } from './draw-image.js';
 import { drawSvg } from './draw-svg.js';
+import { emitBookmarks } from './bookmarks.js';
 import { hasTransform, buildTransformMatrix } from './transform.js';
 
 const _require = createRequire(import.meta.url);
@@ -276,6 +277,11 @@ export function renderPDF(
 		}
 	}
 
+	// Tracks outline items already emitted, keyed by the bookmark id stamped
+	// before pagination, so a node sliced across pages (or a repeated fixed
+	// node) produces exactly one item — on the first page it appears.
+	const bookmarkItems = new Map<number, any>();
+
 	const totalPages = pages.length;
 	for (let i = 0; i < pages.length; i++) {
 		const page = pages[i];
@@ -283,6 +289,10 @@ export function renderPDF(
 		const height = page.props.height ?? 842;
 		doc.addPage({ size: [width, height], margin: 0 });
 		drawNodes(doc, page.children, i + 1, totalPages);
+		// Emit outline entries while this page is the current PDFKit page:
+		// addItem's destination is always doc.page ('Fit'), so items land on
+		// the page just added and drawn.
+		emitBookmarks(doc, page.children, bookmarkItems);
 	}
 
 	doc.end();

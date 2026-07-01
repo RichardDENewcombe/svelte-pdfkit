@@ -11,7 +11,8 @@
 		render: renderFn,
 		breakBefore = false,
 		breakAfter = false,
-		keepWithNext = false
+		keepWithNext = false,
+		bookmark
 	}: {
 		/** Explicit text string. Use either this, children, or render — not multiple. */
 		text?: string;
@@ -31,6 +32,8 @@
 		breakAfter?: boolean;
 		/** Keep this text on the same page as the start of its next sibling. */
 		keepWithNext?: boolean;
+		/** Adds a navigable document-outline entry (bookmark) pointing to this text's page. */
+		bookmark?: string;
 	} = $props();
 
 	const parent = getContext<PDFNode>('__pdf__');
@@ -44,7 +47,7 @@
 		// Render-prop text: no static text at build time.
 		// The actual string is produced at draw time by drawText().
 		// Yoga measures with placeholder values (0, 0) to estimate space.
-		parent.children.push({ type: 'text', props: { render: renderFn, style, breakBefore, breakAfter, keepWithNext }, children: [] });
+		parent.children.push({ type: 'text', props: { render: renderFn, style, breakBefore, breakAfter, keepWithNext, bookmark }, children: [] });
 	} else {
 		let resolvedText = textProp != null ? String(textProp) : '';
 
@@ -68,6 +71,6 @@
 				.trim();
 		}
 
-		parent.children.push({ type: 'text', props: { text: resolvedText, style, breakBefore, breakAfter, keepWithNext }, children: [] });
+		parent.children.push({ type: 'text', props: { text: resolvedText, style, breakBefore, breakAfter, keepWithNext, bookmark }, children: [] });
 	}
 </script>

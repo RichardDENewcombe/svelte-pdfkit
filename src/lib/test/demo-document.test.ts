@@ -34,6 +34,9 @@ describe('DemoDocument', () => {
 		expect(buffer.subarray(0, 5).toString()).toBe('%PDF-');
 		expect(buffer.toString('binary')).toContain('%%EOF');
 
+		// The demo bookmarks each page title, so a document outline is emitted.
+		expect(buffer.toString('binary')).toContain('/Outlines');
+
 		// The document declares nine feature pages; pagination splits the
 		// explicit-page-breaks page into three, so the rendered total is higher.
 		// Assert a generous lower bound so the test is robust to layout tweaks.

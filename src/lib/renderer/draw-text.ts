@@ -1,6 +1,6 @@
 import type { PDFNode } from '../types/pdf.js';
 import { resolveFontStack } from '../runtime/font-registry.js';
-import { wrapLinesMeta, type WrappedLine } from '../layout/text-measure.js';
+import { wrapLinesMeta, WRAP_TOLERANCE, type WrappedLine } from '../layout/text-measure.js';
 import { splitFontRuns, widthOfRuns, type FontRun } from '../layout/font-runs.js';
 
 export function drawText(
@@ -73,7 +73,10 @@ export function drawText(
 	doc
 		.fillColor(color, opacity)
 		.text(text, x, y, {
-			width: width || undefined,
+			// Add the wrap tolerance so PDFKit's own line breaker doesn't re-wrap
+			// text that already fit during layout: the layout width is Yoga's
+			// float32 rounding of the natural width and can be a sub-ulp too narrow.
+			width: width ? width + WRAP_TOLERANCE : undefined,
 			align,
 			lineBreak: true,
 			...(lineGap != null && { lineGap }),

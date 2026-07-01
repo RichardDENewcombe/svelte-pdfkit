@@ -128,6 +128,20 @@ export function getLineHeight(style: Record<string, any>, text?: string): number
 	return style.lineHeight != null ? natural * style.lineHeight : natural;
 }
 
+/**
+ * Slack added to a layout-derived wrap width before comparing it against
+ * double-precision text measurement.
+ *
+ * Yoga stores computed values as 32-bit floats, so a text node's computed width
+ * is `Math.fround(naturalWidth)` — which for many strings rounds *down*, leaving
+ * the box a sub-ulp narrower than the text measured to fit it. Re-measuring in
+ * double precision at wrap/draw time then reports an overflow and breaks a line
+ * that should not break. This tolerance (far below any glyph advance, comfortably
+ * above a float32 ulp for page-sized widths) absorbs that rounding so wrapping at
+ * draw time matches the wrapping the layout pass computed.
+ */
+export const WRAP_TOLERANCE = 0.01;
+
 /** A single wrapped line plus the metadata justification needs. */
 export interface WrappedLine {
 	text: string;
@@ -176,6 +190,10 @@ export function wrapLinesMeta(
 
 	const result: WrappedLine[] = [];
 
+	// Absorb Yoga's float32 truncation of the layout width so a box that is a
+	// sub-ulp narrower than the text it was measured to hold does not wrap.
+	const effectiveWidth = maxWidth > 0 ? maxWidth + WRAP_TOLERANCE : maxWidth;
+
 	for (const paragraph of text.split('\n')) {
 		if (maxWidth <= 0) {
 			// No width constraint — each paragraph is one line, and that line ends
@@ -184,7 +202,7 @@ export function wrapLinesMeta(
 			continue;
 		}
 
-		const paraLines = wrapParagraph(measure, paragraph, maxWidth, hyphenate, lang);
+		const paraLines = wrapParagraph(measure, paragraph, effectiveWidth, hyphenate, lang);
 
 		paraLines.forEach((line, i) => {
 			result.push({ text: line, lastInParagraph: i === paraLines.length - 1 });

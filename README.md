@@ -43,6 +43,7 @@ pdf.pipe(fs.createWriteStream("invoice.pdf"));
   - [Orphans and widows](#orphans-and-widows)
   - [Justified text](#justified-text)
   - [Hyphenation](#hyphenation)
+- [Bookmarks (document outline)](#bookmarks-document-outline)
 - [Using `renderComponent` directly](#using-rendercomponent-directly)
 - [API reference](#api-reference)
 - [How it works](#how-it-works)
@@ -291,11 +292,11 @@ Defines a page. Content that overflows automatically wraps to new pages.
 </Page>
 ```
 
-| Prop          | Type                          | Default      | Description              |
-| ------------- | ----------------------------- | ------------ | ------------------------ |
-| `size`        | `'A4' \| 'Letter' \| 'Legal'` | `'A4'`       | Page size                |
-| `orientation` | `'portrait' \| 'landscape'`   | `'portrait'` | Page orientation         |
-| `style`       | `StyleProps`                  | `{}`         | Flexbox / padding styles |
+| Prop          | Type                                            | Default      | Description                                |
+| ------------- | ----------------------------------------------- | ------------ | ------------------------------------------ |
+| `size`        | `'A4' \| 'Letter' \| 'Legal' \| [number, number]` | `'A4'`       | Page size — a named size or `[width, height]` point tuple |
+| `orientation` | `'portrait' \| 'landscape'`                     | `'portrait'` | Page orientation                           |
+| `style`       | `StyleProps`                                    | `{}`         | Flexbox / padding styles                   |
 
 ---
 
@@ -313,10 +314,12 @@ A box container. The primary layout primitive — equivalent to a `<div>`.
 | Prop           | Type         | Default | Description                                            |
 | -------------- | ------------ | ------- | ------------------------------------------------------ |
 | `style`        | `StyleProps` | `{}`    | Layout and visual styles                               |
+| `wrap`         | `boolean`    | `true`  | When `false`, keep the box intact instead of splitting it across a page break |
 | `fixed`        | `boolean`    | `false` | Repeat on every page (use for headers/footers)         |
 | `breakBefore`  | `boolean`    | `false` | Force a page break before this view                    |
 | `breakAfter`   | `boolean`    | `false` | Force a page break after this view                     |
 | `keepWithNext` | `boolean`    | `false` | Keep on the same page as the start of the next sibling |
+| `bookmark`     | `string`     | —       | Adds a document-outline entry (bookmark) pointing to this view's page |
 
 `breakBefore`, `breakAfter`, and `keepWithNext` are explained in [Page breaks and flow control](#page-breaks-and-flow-control).
 
@@ -346,6 +349,7 @@ Renders text. Supports word wrapping, alignment, and dynamic page numbers.
 | `breakBefore`  | `boolean`                            | Force a page break before this text                    |
 | `breakAfter`   | `boolean`                            | Force a page break after this text                     |
 | `keepWithNext` | `boolean`                            | Keep on the same page as the start of the next sibling |
+| `bookmark`     | `string`                             | Adds a document-outline entry (bookmark) pointing to this text's page |
 
 Use `text`, `children`, or `render` — not multiple at once. See [Page breaks and flow control](#page-breaks-and-flow-control) for `breakBefore` / `breakAfter` / `keepWithNext`, and the [Typography](#typography) styles for `textAlign: 'justify'`, `orphans`, and `widows`.
 
@@ -371,6 +375,7 @@ Renders a PNG, JPEG, or **SVG** image. Supports local files, base64 / data URIs,
 | `breakBefore`  | `boolean`    | Force a page break before this image                   |
 | `breakAfter`   | `boolean`    | Force a page break after this image                    |
 | `keepWithNext` | `boolean`    | Keep on the same page as the start of the next sibling |
+| `bookmark`     | `string`     | Adds a document-outline entry (bookmark) pointing to this image's page |
 
 Raster sources (PNG/JPEG) are drawn by PDFKit; SVG sources are detected by extension, `image/svg+xml` data URI, or content, then drawn as vectors via [svg-to-pdfkit](https://github.com/alafr/SVG-to-PDFKit).
 
@@ -438,10 +443,11 @@ Wraps content with a clickable hyperlink in the PDF.
 </Link>
 ```
 
-| Prop    | Type         | Description   |
-| ------- | ------------ | ------------- |
-| `href`  | `string`     | Target URL    |
-| `style` | `StyleProps` | Layout styles |
+| Prop       | Type         | Description   |
+| ---------- | ------------ | ------------- |
+| `href`     | `string`     | Target URL    |
+| `style`    | `StyleProps` | Layout styles |
+| `bookmark` | `string`     | Adds a document-outline entry (bookmark) pointing to this link's page |
 
 ---
 
@@ -847,6 +853,54 @@ registerHyphenationCallback((word) => h.hyphenate(word));
 
 ---
 
+## Bookmarks (document outline)
+
+Add a `bookmark="Title"` prop to any `<View>`, `<Text>`, `<Image>`, or `<Link>`
+to create an entry in the PDF's **document outline** — the navigable sidebar of
+bookmarks that viewers (Preview, Acrobat, browser PDF viewers) show for jumping
+around a document. Each entry links to the page the node lands on.
+
+```svelte
+<Page size="A4" style={{ padding: 40 }}>
+  <Text bookmark="Introduction" text="Introduction" style={{ fontSize: 20 }} />
+  <Text text={introBody} />
+
+  <View breakBefore bookmark="Results">
+    <Text text="Results" style={{ fontSize: 20 }} />
+    <Text text={resultsBody} />
+  </View>
+</Page>
+```
+
+**Hierarchy mirrors the component tree.** A bookmarked node nested inside another
+bookmarked node becomes its child in the outline, so you get a real multi-level
+structure for free:
+
+```svelte
+<View bookmark="Chapter 1">
+  <Text bookmark="1.1 Overview" text="Overview" style={{ fontSize: 16 }} />
+  <Text bookmark="1.2 Details"  text="Details"  style={{ fontSize: 16 }} />
+</View>
+```
+
+produces:
+
+```
+Chapter 1
+├─ 1.1 Overview
+└─ 1.2 Details
+```
+
+Notes:
+
+- The destination is **page-level** (the viewer scrolls to the top of the target
+  page, not the exact node), a constraint of PDFKit's outline API.
+- A node that spans a page break, or a `fixed` node repeated on every page,
+  still produces **exactly one** outline entry — on the first page it appears.
+- Empty-string titles are ignored (no entry is created).
+
+---
+
 ## Remote resources & security
 
 `<Font>` and `<Image>` accept `http(s)` URLs, which are fetched on the **server**
@@ -1019,8 +1073,8 @@ const footer: PageNumberRenderer = ({ pageNumber, totalPages }) =>
 - Server-side only — does not run in a browser
 - Remote image and font loading requires network access at render time
 - Text measurement uses PDFKit metrics; custom fonts must be declared with `<Font>` before layout runs
-- Family-level font fallback only — per-glyph substitution (and colour emoji) is not yet supported
-- No fillable form fields, file attachments, or PDF bookmarks/outline
+- Colour emoji (COLR/CBDT/sbix) renders monochrome — gated by PDFKit. (Family-level and per-glyph font fallback are both supported.)
+- No fillable form fields or file attachments
 
 ---
 

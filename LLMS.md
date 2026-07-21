@@ -282,11 +282,12 @@ Types: `StyleProps`, `PageRenderProps`, `PageNumberRenderer`, `PDFNode`,
 
 - HTML elements (`div`, `span`, `p`, `table`/`tr`/`td` — use the components above).
 - CSS strings (`style="..."`), CSS classes, `class=`, stylesheets, `@media`.
-- `display`, `grid`, `float`, `inline`, `z-index`, box-shadow, `transform` /
-  `rotate` / `scale` on layout nodes (only SVG `<G transform>` exists).
+- `display`, `grid`, `float`, `inline`, `z-index`, box-shadow. (Transforms —
+  `rotate` / `scale` / `translateX` / `translateY` / `skewX` / `skewY` — ARE
+  supported on layout nodes; see the transform style props.)
 - Colour emoji (COLR/CBDT/sbix) — per-glyph fallback works, but emoji render
   monochrome (gated by PDFKit).
-- Fillable form fields (AcroForm), file attachments, PDF bookmarks/outline.
+- Fillable form fields (AcroForm), file attachments.
 - Running in the browser; reading from the DOM.
 - `gradientUnits: 'objectBoundingBox'`, nested `<ClipPath>`, nested `<Tspan>`.
 

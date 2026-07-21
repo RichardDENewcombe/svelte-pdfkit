@@ -6,7 +6,7 @@
 	control in a multi-page PDF.
 
 	Render it with:
-	  import { renderComponent } from 'svelte-pdf';
+	  import { renderComponent } from 'svelte-pdfkit';
 	  import DemoDocument from './DemoDocument.svelte';
 	  const stream = await renderComponent(DemoDocument);
 

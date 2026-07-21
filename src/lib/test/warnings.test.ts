@@ -1,7 +1,7 @@
 /**
  * Tests for dev warnings emitted via console.warn.
  *
- * Each component emits a [svelte-pdf] prefixed warning when it receives
+ * Each component emits a [svelte-pdfkit] prefixed warning when it receives
  * invalid or missing props. renderComponent() warns when a document has
  * no <Page> elements.
  */
@@ -52,7 +52,7 @@ describe('warnings – <Image>', () => {
 	it('warns when src is an empty string', () => {
 		const spy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 		renderInContext(ImageComponent, { src: '' });
-		expect(spy).toHaveBeenCalledWith(expect.stringContaining('[svelte-pdf]'));
+		expect(spy).toHaveBeenCalledWith(expect.stringContaining('[svelte-pdfkit]'));
 		expect(spy).toHaveBeenCalledWith(expect.stringContaining('<Image>'));
 	});
 
@@ -72,7 +72,7 @@ describe('warnings – <Text>', () => {
 			text: 'hello',
 			render: () => 'world'
 		});
-		expect(spy).toHaveBeenCalledWith(expect.stringContaining('[svelte-pdf]'));
+		expect(spy).toHaveBeenCalledWith(expect.stringContaining('[svelte-pdfkit]'));
 		expect(spy).toHaveBeenCalledWith(expect.stringContaining('<Text>'));
 	});
 
@@ -95,14 +95,14 @@ describe('warnings – <Font>', () => {
 	it('warns when name is missing', () => {
 		const spy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 		renderInContext(FontComponent, { src: '/fonts/Inter.ttf' } as any);
-		expect(spy).toHaveBeenCalledWith(expect.stringContaining('[svelte-pdf]'));
+		expect(spy).toHaveBeenCalledWith(expect.stringContaining('[svelte-pdfkit]'));
 		expect(spy).toHaveBeenCalledWith(expect.stringContaining('<Font>'));
 	});
 
 	it('warns when src is missing', () => {
 		const spy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 		renderInContext(FontComponent, { name: 'Inter' } as any);
-		expect(spy).toHaveBeenCalledWith(expect.stringContaining('[svelte-pdf]'));
+		expect(spy).toHaveBeenCalledWith(expect.stringContaining('[svelte-pdfkit]'));
 		expect(spy).toHaveBeenCalledWith(expect.stringContaining('src'));
 	});
 
@@ -119,7 +119,7 @@ describe('warnings – <Canvas>', () => {
 	it('warns when draw prop is missing', () => {
 		const spy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 		renderInContext(CanvasComponent, { style: {} } as any);
-		expect(spy).toHaveBeenCalledWith(expect.stringContaining('[svelte-pdf]'));
+		expect(spy).toHaveBeenCalledWith(expect.stringContaining('[svelte-pdfkit]'));
 		expect(spy).toHaveBeenCalledWith(expect.stringContaining('<Canvas>'));
 	});
 
@@ -136,7 +136,7 @@ describe('warnings – <Link>', () => {
 	it('warns when href is an empty string', () => {
 		const spy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 		renderInContext(LinkComponent, { href: '' });
-		expect(spy).toHaveBeenCalledWith(expect.stringContaining('[svelte-pdf]'));
+		expect(spy).toHaveBeenCalledWith(expect.stringContaining('[svelte-pdfkit]'));
 		expect(spy).toHaveBeenCalledWith(expect.stringContaining('<Link>'));
 	});
 
@@ -157,7 +157,7 @@ describe('warnings – <Page>', () => {
 			props: { size: 'A3' },
 			context: new Map([['__pdf__', doc], ['__pdf_root__', doc]])
 		});
-		expect(spy).toHaveBeenCalledWith(expect.stringContaining('[svelte-pdf]'));
+		expect(spy).toHaveBeenCalledWith(expect.stringContaining('[svelte-pdfkit]'));
 		expect(spy).toHaveBeenCalledWith(expect.stringContaining('A3'));
 	});
 
@@ -181,7 +181,7 @@ describe('warnings – renderComponent with no <Page>', () => {
 	it('warns when the document contains no page nodes', async () => {
 		const spy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 		await renderComponent(NoPagesTemplate as any);
-		expect(spy).toHaveBeenCalledWith(expect.stringContaining('[svelte-pdf]'));
+		expect(spy).toHaveBeenCalledWith(expect.stringContaining('[svelte-pdfkit]'));
 		expect(spy).toHaveBeenCalledWith(expect.stringContaining('<Page>'));
 	});
 });

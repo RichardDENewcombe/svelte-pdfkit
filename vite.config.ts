@@ -3,9 +3,9 @@ import { svelte } from '@sveltejs/vite-plugin-svelte';
 import { fileURLToPath } from 'node:url';
 import { sveltePDF } from './src/lib/compiler/vite-plugin.js';
 
-// Resolve the absolute path to src/lib/ so we can alias 'svelte-pdf' → local source.
-// This is needed because the generated render wrappers import from 'svelte-pdf/runtime/...',
-// 'svelte-pdf/layout/...', etc. — those bare specifiers only work once the package is
+// Resolve the absolute path to src/lib/ so we can alias 'svelte-pdfkit' → local source.
+// This is needed because the generated render wrappers import from 'svelte-pdfkit/runtime/...',
+// 'svelte-pdfkit/layout/...', etc. — those bare specifiers only work once the package is
 // published, so during development and testing we redirect them here.
 const libDir = fileURLToPath(new URL('./src/lib', import.meta.url));
 
@@ -28,10 +28,10 @@ export default defineConfig({
 
 	resolve: {
 		alias: {
-			// Map 'svelte-pdf' → our local src/lib during development and testing.
-			// The generated wrappers import 'svelte-pdf/runtime/document.js' etc.
+			// Map 'svelte-pdfkit' → our local src/lib during development and testing.
+			// The generated wrappers import 'svelte-pdfkit/runtime/document.js' etc.
 			// Without this alias those imports would fail with "Cannot find module".
-			'svelte-pdf': libDir
+			'svelte-pdfkit': libDir
 		}
 	},
 

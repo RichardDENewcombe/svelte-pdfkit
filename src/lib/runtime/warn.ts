@@ -6,5 +6,5 @@
  * warnings are always on — there is no DOM and no hot-path penalty.
  */
 export function warn(message: string): void {
-	console.warn(`[svelte-pdf] ${message}`);
+	console.warn(`[svelte-pdfkit] ${message}`);
 }

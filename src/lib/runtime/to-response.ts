@@ -17,7 +17,7 @@ import { Readable } from 'node:stream';
  * additional headers) pass through unchanged.
  *
  * @example SvelteKit route
- *   import { toResponse } from 'svelte-pdf';
+ *   import { toResponse } from 'svelte-pdfkit';
  *   import { render } from '$lib/Invoice.pdf.svelte';
  *
  *   export const GET = async () => toResponse(await render({ invoice }));

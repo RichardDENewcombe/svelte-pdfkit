@@ -1,11 +1,11 @@
-# svelte-pdf — LLM usage guide
+# svelte-pdfkit — LLM usage guide
 
-A dense, authoritative reference for generating correct svelte-pdf code. If you
+A dense, authoritative reference for generating correct svelte-pdfkit code. If you
 are an AI assistant writing PDF templates with this library, read this file
 first. It states the rules, the complete API surface, and the features that do
 **not** exist (so you don't invent them).
 
-`svelte-pdf` renders PDFs from Svelte 5 components, **server-side only** (Node /
+`svelte-pdfkit` renders PDFs from Svelte 5 components, **server-side only** (Node /
 edge), via Yoga (flexbox layout) + PDFKit (drawing). No DOM, no browser.
 
 ---
@@ -38,7 +38,7 @@ edge), via Yoga (flexbox layout) + PDFKit (drawing). No DOM, no browser.
 ```ts
 // vite.config.ts
 import { sveltekit } from '@sveltejs/kit/vite';
-import { sveltePDF } from 'svelte-pdf/compiler/vite-plugin';
+import { sveltePDF } from 'svelte-pdfkit/compiler/vite-plugin';
 
 export default { plugins: [sveltePDF(), sveltekit()] }; // sveltePDF() must be first
 ```
@@ -47,7 +47,7 @@ export default { plugins: [sveltePDF(), sveltekit()] }; // sveltePDF() must be f
 
 ```ts
 // +server.ts
-import { toResponse } from 'svelte-pdf';
+import { toResponse } from 'svelte-pdfkit';
 import { render } from '$lib/Invoice.pdf.svelte';
 
 export async function GET() {
@@ -69,7 +69,7 @@ pdf.pipe(fs.createWriteStream('invoice.pdf'));
 ### Without the Vite plugin (plain `.svelte` component)
 
 ```ts
-import { renderComponent } from 'svelte-pdf';
+import { renderComponent } from 'svelte-pdfkit';
 import Doc from './Doc.svelte';
 const pdf = await renderComponent(Doc, { title: 'Hi' });
 ```
@@ -81,7 +81,7 @@ const pdf = await renderComponent(Doc, { title: 'Hi' });
 ```svelte
 <!-- Invoice.pdf.svelte -->
 <script lang="ts">
-  import { Document, Page, View, Text, Font } from 'svelte-pdf';
+  import { Document, Page, View, Text, Font } from 'svelte-pdfkit';
   const { invoice } = $props();
 </script>
 
@@ -117,7 +117,7 @@ const pdf = await renderComponent(Doc, { title: 'Hi' });
 
 ## Components (complete)
 
-Import everything from `'svelte-pdf'`.
+Import everything from `'svelte-pdfkit'`.
 
 ### Layout & content
 
@@ -256,7 +256,7 @@ run. Colour emoji renders monochrome (PDFKit limitation).
 
 ---
 
-## Runtime exports (from `'svelte-pdf'`)
+## Runtime exports (from `'svelte-pdfkit'`)
 
 | Export | Signature | Use |
 | ------ | --------- | --- |

@@ -35,7 +35,7 @@ export function drawImage(doc: any, node: PDFNode): void {
 
 	const buffer = getImageBuffer(src);
 	if (!buffer) {
-		console.warn(`svelte-pdf: image not loaded: ${src}`);
+		console.warn(`svelte-pdfkit: image not loaded: ${src}`);
 		return;
 	}
 
@@ -74,6 +74,6 @@ function drawSvgImage(
 	try {
 		getSVGtoPDF()(doc, buffer.toString('utf-8'), x, y, opts);
 	} catch (err) {
-		console.warn(`svelte-pdf: failed to render SVG image "${src}": ${(err as Error).message}`);
+		console.warn(`svelte-pdfkit: failed to render SVG image "${src}": ${(err as Error).message}`);
 	}
 }

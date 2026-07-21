@@ -1,11 +1,11 @@
-# svelte-pdf
+# svelte-pdfkit
 
 A Svelte-native PDF rendering library for Svelte 5. Write PDF layouts using Svelte components and render them server-side to a Node.js stream — no DOM required.
 
 ```svelte
 <!-- Invoice.pdf.svelte -->
 <script>
-  import { Page, View, Text, Image } from 'svelte-pdf';
+  import { Page, View, Text, Image } from 'svelte-pdfkit';
   const { invoice } = $props();
 </script>
 
@@ -55,7 +55,7 @@ pdf.pipe(fs.createWriteStream("invoice.pdf"));
 
 ## Core principles
 
-svelte-pdf is small to learn because it leans on things you already know —
+svelte-pdfkit is small to learn because it leans on things you already know —
 Svelte and flexbox — and deliberately avoids reinventing the browser. Five ideas
 explain almost all of its behaviour:
 
@@ -120,7 +120,7 @@ headers/footers, [orphans/widows](#orphans-and-widows)).
 ## Installation
 
 ```bash
-npm install svelte-pdf
+npm install svelte-pdfkit
 ```
 
 **Peer dependency:** Svelte 5
@@ -134,7 +134,7 @@ Add the Vite plugin so `.pdf.svelte` files are compiled into `render()` function
 ```ts
 // vite.config.ts
 import { sveltekit } from "@sveltejs/kit/vite";
-import { sveltePDF } from "svelte-pdf/compiler/vite-plugin";
+import { sveltePDF } from "svelte-pdfkit/compiler/vite-plugin";
 
 export default {
   plugins: [sveltePDF(), sveltekit()],
@@ -166,7 +166,7 @@ Create a file ending in `.pdf.svelte`. Use the provided components to build the 
 ```svelte
 <!-- Report.pdf.svelte -->
 <script lang="ts">
-  import { Page, View, Text } from 'svelte-pdf';
+  import { Page, View, Text } from 'svelte-pdfkit';
   const { title, items } = $props<{ title: string; items: string[] }>();
 </script>
 
@@ -189,7 +189,7 @@ Web `Response` — converting the stream and defaulting `Content-Type` to
 
 ```ts
 // src/routes/report/+server.ts
-import { toResponse } from "svelte-pdf";
+import { toResponse } from "svelte-pdfkit";
 import { render } from "$lib/Report.pdf.svelte";
 
 export async function GET() {
@@ -832,7 +832,7 @@ Set `hyphenation: true` on a `<Text>` style to break words that overflow a line 
 Patterns are language-specific. British (`en-gb`) and American (`en-us`) English ship bundled and genuinely differ (e.g. `know-ledge` vs `knowl-edge`). `en-gb` is the default; choose per node with `hyphenationLang`, or set the global default once:
 
 ```ts
-import { setDefaultHyphenationLang } from 'svelte-pdf';
+import { setDefaultHyphenationLang } from 'svelte-pdfkit';
 setDefaultHyphenationLang('en-us');
 ```
 
@@ -845,7 +845,7 @@ For any other language, register a callback that splits a word into its parts (t
 ```ts
 import Hypher from 'hypher';
 import de from 'hyphenation.de';
-import { registerHyphenationCallback } from 'svelte-pdf';
+import { registerHyphenationCallback } from 'svelte-pdfkit';
 
 const h = new Hypher(de);
 registerHyphenationCallback((word) => h.hyphenate(word));
@@ -919,13 +919,13 @@ guarded by default:
   distinct remote URLs doesn't grow memory without bound.
 
 A resource that is blocked, times out, errors, or is oversized is **skipped with a
-`[svelte-pdf]` warning** — rendering continues (text falls back to Helvetica; the
+`[svelte-pdfkit]` warning** — rendering continues (text falls back to Helvetica; the
 image is omitted).
 
 Tune the policy process-wide with `configureRemoteResources`:
 
 ```ts
-import { configureRemoteResources } from "svelte-pdf";
+import { configureRemoteResources } from "svelte-pdfkit";
 
 configureRemoteResources({
   timeoutMs: 3000, // tighter timeout
@@ -948,7 +948,7 @@ configureRemoteResources({
 For cases where you are not using `.pdf.svelte` files (e.g. in tests or non-Vite environments), call `renderComponent` directly:
 
 ```ts
-import { renderComponent } from "svelte-pdf";
+import { renderComponent } from "svelte-pdfkit";
 import MyDocument from "./MyDocument.svelte";
 
 const pdf = await renderComponent(MyDocument, { title: "Hello" });
@@ -961,13 +961,13 @@ pdf.pipe(fs.createWriteStream("output.pdf"));
 
 ## API reference
 
-Everything below is exported from the package root (`svelte-pdf`) unless a
+Everything below is exported from the package root (`svelte-pdfkit`) unless a
 different import path is noted.
 
 ### Components
 
 ```ts
-import { Document, Page, View, Text, Image, Font, Link, Canvas } from "svelte-pdf";
+import { Document, Page, View, Text, Image, Font, Link, Canvas } from "svelte-pdfkit";
 ```
 
 | Group | Components |
@@ -981,7 +981,7 @@ See [Components](#components) and [SVG components](#svg-components) for props.
 ### Runtime functions
 
 ```ts
-import { renderComponent, toResponse } from "svelte-pdf";
+import { renderComponent, toResponse } from "svelte-pdfkit";
 ```
 
 | Function | Signature | Description |
@@ -996,7 +996,7 @@ import { renderComponent, toResponse } from "svelte-pdf";
 ### Types
 
 ```ts
-import type { StyleProps, PageNumberRenderer } from "svelte-pdf";
+import type { StyleProps, PageNumberRenderer } from "svelte-pdfkit";
 ```
 
 `PDFNode`, `DocumentContext`, `StyleProps`, `NodeType`, `LayoutBox`,
@@ -1014,7 +1014,7 @@ Each `.pdf.svelte` file, processed by the Vite plugin, exports:
 ### Vite plugin
 
 ```ts
-import { sveltePDF } from "svelte-pdf/compiler/vite-plugin";
+import { sveltePDF } from "svelte-pdfkit/compiler/vite-plugin";
 ```
 
 | Export | Signature | Description |
@@ -1053,14 +1053,14 @@ Components never touch the DOM. They use Svelte's `getContext`/`setContext` to b
 
 ## TypeScript
 
-All components and the `StyleProps` type are fully typed. Import types from `svelte-pdf`:
+All components and the `StyleProps` type are fully typed. Import types from `svelte-pdfkit`:
 
 ```ts
 import type {
   StyleProps,
   PageNumberRenderer,
   PageRenderProps,
-} from "svelte-pdf";
+} from "svelte-pdfkit";
 
 const footer: PageNumberRenderer = ({ pageNumber, totalPages }) =>
   `Page ${pageNumber} of ${totalPages}`;

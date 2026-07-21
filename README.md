@@ -406,7 +406,7 @@ Then use the font name in text styles:
 | `weight`    | `'normal' \| 'bold'`   | Font weight variant                          |
 | `fontStyle` | `'normal' \| 'italic'` | Font style variant                           |
 
-Local files and remote URLs are both loaded asynchronously before layout, and each `src` is cached for the process lifetime so it is fetched only once. If a remote font fails to load, a warning is logged and text falls back to Helvetica.
+Local files and remote URLs are both loaded asynchronously before layout, and each `src` is cached (a bounded per-process LRU) so it is fetched only once. Remote fetches are bounded by a timeout and size cap and pass an SSRF guard — see [Remote resources & security](#remote-resources--security). If a remote font fails to load, a warning is logged and text falls back to Helvetica.
 
 PDFKit's built-in fonts (`Helvetica`, `Helvetica-Bold`, `Helvetica-Oblique`, `Times-Roman`, `Courier`, etc.) are available without declaring a `<Font>`.
 
@@ -847,6 +847,48 @@ registerHyphenationCallback((word) => h.hyphenate(word));
 
 ---
 
+## Remote resources & security
+
+`<Font>` and `<Image>` accept `http(s)` URLs, which are fetched on the **server**
+at render time. Because a URL can be user-supplied, remote loading is bounded and
+guarded by default:
+
+- **Timeout** — each fetch is aborted after `timeoutMs` (default **10 s**), so one
+  slow host can never hang the render.
+- **Size cap** — responses larger than `maxBytes` (default **10 MiB**) are refused.
+- **SSRF guard** — a URL whose host resolves to a loopback, private, link-local,
+  or cloud-metadata address (e.g. `127.0.0.1`, `10.0.0.0/8`, `169.254.169.254`) is
+  **blocked**. Hostnames are resolved via DNS and every returned address is
+  checked, so a public name pointing at a private IP is blocked too.
+- **Bounded cache** — fetched buffers are cached (per process) as an LRU capped at
+  `cacheMax` entries (default **256**) each for fonts and images, so rendering many
+  distinct remote URLs doesn't grow memory without bound.
+
+A resource that is blocked, times out, errors, or is oversized is **skipped with a
+`[svelte-pdf]` warning** — rendering continues (text falls back to Helvetica; the
+image is omitted).
+
+Tune the policy process-wide with `configureRemoteResources`:
+
+```ts
+import { configureRemoteResources } from "svelte-pdf";
+
+configureRemoteResources({
+  timeoutMs: 3000, // tighter timeout
+  maxBytes: 2 * 1024 * 1024, // 2 MiB cap
+  // Permit a specific internal host without disabling the guard globally:
+  allowHost: (hostname) => hostname === "fonts.internal.corp"
+  // Or, if every URL is trusted, drop the SSRF guard entirely:
+  // allowPrivateHosts: true
+});
+```
+
+> Note: the SSRF guard checks the resolved address, then fetches separately, so a
+> host that changes its DNS answer between the two (DNS rebinding) is not fully
+> closed off. Only load remote URLs from sources you broadly trust.
+
+---
+
 ## Using `renderComponent` directly
 
 For cases where you are not using `.pdf.svelte` files (e.g. in tests or non-Vite environments), call `renderComponent` directly:
@@ -895,6 +937,7 @@ import { renderComponent, toResponse } from "svelte-pdf";
 | `createDocument` | `() => DocumentContext` | Low-level: create a fresh document context. |
 | `createNode` | `(type: NodeType, props?) => PDFNode` | Low-level: construct an AST node. |
 | `resolveFont` | `(family: string, weight?: string, style?: string) => string` | Low-level: resolve a registered PDFKit font-variant name. |
+| `configureRemoteResources` | `(opts: Partial<RemoteResourceConfig>) => void` | Set the process-wide policy for remote font/image loading (timeout, size cap, SSRF guard, cache size). See [Remote resources & security](#remote-resources--security). |
 
 ### Types
 
@@ -903,7 +946,8 @@ import type { StyleProps, PageNumberRenderer } from "svelte-pdf";
 ```
 
 `PDFNode`, `DocumentContext`, `StyleProps`, `NodeType`, `LayoutBox`,
-`ResourceEntry`, `PDFMetadata`, `PageRenderProps`, `PageNumberRenderer`.
+`ResourceEntry`, `PDFMetadata`, `PageRenderProps`, `PageNumberRenderer`,
+`RemoteResourceConfig`.
 
 ### Compiled templates
 

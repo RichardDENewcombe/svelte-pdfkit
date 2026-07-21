@@ -265,10 +265,16 @@ run. Colour emoji renders monochrome (PDFKit limitation).
 | `setDefaultHyphenationLang` | `(lang) => void` | Global hyphenation language |
 | `registerHyphenationCallback` | `(fn) => void` | Custom hyphenation |
 | `hyphenateWord` | `(word, lang?) => string[]` | Low-level hyphenation |
+| `configureRemoteResources` | `(opts) => void` | Policy for remote font/image fetches: `timeoutMs`, `maxBytes`, `allowPrivateHosts`, `allowHost`, `cacheMax` |
 | `createDocument`, `createNode`, `resolveFont` | — | Low-level internals (rarely needed) |
 
+Remote (`http(s)`) fonts/images are fetched server-side with a 10 s timeout, a
+10 MiB size cap, and an SSRF guard that blocks private/loopback/metadata hosts by
+default. Failures are warned and skipped. Adjust via `configureRemoteResources`.
+
 Types: `StyleProps`, `PageRenderProps`, `PageNumberRenderer`, `PDFNode`,
-`DocumentContext`, `NodeType`, `LayoutBox`, `ResourceEntry`, `PDFMetadata`.
+`DocumentContext`, `NodeType`, `LayoutBox`, `ResourceEntry`, `PDFMetadata`,
+`RemoteResourceConfig`.
 
 ---
 

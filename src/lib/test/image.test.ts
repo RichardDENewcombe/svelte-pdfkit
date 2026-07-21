@@ -8,6 +8,14 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+
+// The SSRF guard resolves hostnames via DNS; mock it so example.com is
+// deterministically a public address and no real network lookup happens.
+// A plain function (not a spy) so vi.restoreAllMocks() in afterEach can't wipe it.
+vi.mock('node:dns/promises', () => ({
+	lookup: async () => [{ address: '93.184.216.34', family: 4 }]
+}));
+
 import { loadResources, getImageBuffer } from '../runtime/resources.js';
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
@@ -60,7 +68,7 @@ describe('loadResources – remote images', () => {
 		await loadResources([{ type: 'image', src: url }]);
 
 		expect(fetchMock).toHaveBeenCalledOnce();
-		expect(fetchMock).toHaveBeenCalledWith(url);
+		expect(fetchMock).toHaveBeenCalledWith(url, expect.objectContaining({ signal: expect.any(AbortSignal) }));
 	});
 
 	it('calls fetch() for https:// URLs', async () => {
@@ -72,7 +80,7 @@ describe('loadResources – remote images', () => {
 		await loadResources([{ type: 'image', src: url }]);
 
 		expect(fetchMock).toHaveBeenCalledOnce();
-		expect(fetchMock).toHaveBeenCalledWith(url);
+		expect(fetchMock).toHaveBeenCalledWith(url, expect.objectContaining({ signal: expect.any(AbortSignal) }));
 	});
 
 	it('stores the fetched bytes in the image cache', async () => {

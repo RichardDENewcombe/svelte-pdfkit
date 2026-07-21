@@ -39,6 +39,8 @@ export {
 	hyphenateWord
 } from './layout/hyphenation.js';
 export type { HyphenationCallback } from './layout/hyphenation.js';
+export { configureRemoteResources, getRemoteConfig } from './runtime/remote-config.js';
+export type { RemoteResourceConfig } from './runtime/remote-config.js';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 export type {

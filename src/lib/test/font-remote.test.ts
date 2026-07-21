@@ -9,6 +9,14 @@
 
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import fs from 'node:fs/promises';
+
+// The SSRF guard resolves hostnames via DNS; mock it so example.com is
+// deterministically a public address and no real network lookup happens.
+// A plain function (not a spy) so vi.restoreAllMocks() in afterEach can't wipe it.
+vi.mock('node:dns/promises', () => ({
+	lookup: async () => [{ address: '93.184.216.34', family: 4 }]
+}));
+
 import { loadResources, getFontBuffer } from '../runtime/resources.js';
 import { renderComponent } from '../runtime/render.js';
 import FontRenderTemplate from './FontRenderTemplate.svelte';
@@ -48,7 +56,7 @@ describe('loadResources – remote fonts', () => {
 		await loadResources([{ type: 'font', name: 'RemoteA', src: url }]);
 
 		expect(fetchMock).toHaveBeenCalledOnce();
-		expect(fetchMock).toHaveBeenCalledWith(url);
+		expect(fetchMock).toHaveBeenCalledWith(url, expect.objectContaining({ signal: expect.any(AbortSignal) }));
 	});
 
 	it('calls fetch() for https:// URLs', async () => {
@@ -59,7 +67,7 @@ describe('loadResources – remote fonts', () => {
 		await loadResources([{ type: 'font', name: 'RemoteB', src: url }]);
 
 		expect(fetchMock).toHaveBeenCalledOnce();
-		expect(fetchMock).toHaveBeenCalledWith(url);
+		expect(fetchMock).toHaveBeenCalledWith(url, expect.objectContaining({ signal: expect.any(AbortSignal) }));
 	});
 
 	it('stores the fetched bytes in the font cache', async () => {

@@ -29,6 +29,21 @@ export function parseUrlRef(value) {
     const match = value.match(/^url\(#([^)]+)\)$/);
     return match ? match[1] : null;
 }
+// ── viewBox parser ─────────────────────────────────────────────────────────────
+/**
+ * Parses an SVG `viewBox` ("min-x min-y width height") into its four numbers.
+ * Accepts comma- or space-separated values. Returns `null` if it isn't four
+ * finite numbers.
+ */
+export function parseViewBox(value) {
+    if (!value)
+        return null;
+    const nums = value.trim().split(/[\s,]+/).map(Number);
+    if (nums.length !== 4 || nums.some((n) => !Number.isFinite(n)))
+        return null;
+    const [minX, minY, width, height] = nums;
+    return { minX, minY, width, height };
+}
 /**
  * Walks the SVG children to find all `svg_defs` nodes.
  * Creates PDFKit gradient objects and registers clip path nodes by id.
@@ -72,11 +87,43 @@ function collectDefs(children, doc) {
 function isNoPaint(value) {
     return value === 'transparent' || value === 'none';
 }
-function applyPaint(doc, fill, stroke, strokeWidth, opacity, defs) {
+/**
+ * Normalizes an SVG `stroke-dasharray` value into a positive-length array that
+ * PDFKit's `doc.dash()` accepts. Handles numbers, arrays, and the SVG string
+ * forms ("4 2", "4,2"). Non-finite or non-positive lengths are dropped; returns
+ * `null` when nothing usable remains (e.g. "none", "0", empty).
+ */
+function parseDashArray(value) {
+    if (value == null)
+        return null;
+    let nums;
+    if (typeof value === 'number')
+        nums = [value];
+    else if (Array.isArray(value))
+        nums = value.map(Number);
+    else
+        nums = value.trim().split(/[\s,]+/).map(Number);
+    const valid = nums.filter((n) => Number.isFinite(n) && n > 0);
+    return valid.length > 0 ? valid : null;
+}
+/**
+ * Applies a dash pattern before a stroke, mapping `stroke-dashoffset` to
+ * PDFKit's dash `phase`. No-ops when there is no usable pattern. The pattern is
+ * scoped by the enclosing doc.save()/restore(), so it never leaks to siblings.
+ */
+function applyDash(doc, strokeDasharray, strokeDashoffset) {
+    const arr = parseDashArray(strokeDasharray);
+    if (!arr)
+        return;
+    doc.dash(arr, { phase: strokeDashoffset ?? 0 });
+}
+function applyPaint(doc, props, defs) {
+    const { fill, stroke, strokeWidth, opacity, strokeDasharray, strokeDashoffset } = props;
     if (opacity != null)
         doc.opacity(opacity);
     if (strokeWidth != null)
         doc.lineWidth(strokeWidth);
+    applyDash(doc, strokeDasharray, strokeDashoffset);
     // Resolve url(#id) references to pre-created gradient objects
     const fillRef = parseUrlRef(fill);
     const strokeRef = parseUrlRef(stroke);
@@ -129,14 +176,14 @@ function drawSvgNode(doc, node, defs, asClip = false) {
             if (props.d) {
                 doc.path(props.d);
                 if (!asClip)
-                    applyPaint(doc, props.fill, props.stroke, props.strokeWidth, props.opacity, defs);
+                    applyPaint(doc, props, defs);
             }
             break;
         }
         case 'svg_circle': {
             doc.circle(props.cx ?? 0, props.cy ?? 0, props.r ?? 0);
             if (!asClip)
-                applyPaint(doc, props.fill, props.stroke, props.strokeWidth, props.opacity, defs);
+                applyPaint(doc, props, defs);
             break;
         }
         case 'svg_rect': {
@@ -149,13 +196,13 @@ function drawSvgNode(doc, node, defs, asClip = false) {
                 doc.rect(props.x ?? 0, props.y ?? 0, props.width ?? 0, props.height ?? 0);
             }
             if (!asClip)
-                applyPaint(doc, props.fill, props.stroke, props.strokeWidth, props.opacity, defs);
+                applyPaint(doc, props, defs);
             break;
         }
         case 'svg_ellipse': {
             doc.ellipse(props.cx ?? 0, props.cy ?? 0, props.rx ?? 0, props.ry ?? props.rx ?? 0);
             if (!asClip)
-                applyPaint(doc, props.fill, props.stroke, props.strokeWidth, props.opacity, defs);
+                applyPaint(doc, props, defs);
             break;
         }
         case 'svg_line': {
@@ -166,6 +213,7 @@ function drawSvgNode(doc, node, defs, asClip = false) {
                     doc.opacity(props.opacity);
                 if (props.strokeWidth != null)
                     doc.lineWidth(props.strokeWidth);
+                applyDash(doc, props.strokeDasharray, props.strokeDashoffset);
                 doc.stroke(props.stroke ?? 'black');
             }
             break;
@@ -177,7 +225,7 @@ function drawSvgNode(doc, node, defs, asClip = false) {
                 for (let i = 1; i < pts.length; i++)
                     doc.lineTo(pts[i][0], pts[i][1]);
                 if (!asClip)
-                    applyPaint(doc, props.fill, props.stroke, props.strokeWidth, props.opacity, defs);
+                    applyPaint(doc, props, defs);
             }
             break;
         }
@@ -189,7 +237,7 @@ function drawSvgNode(doc, node, defs, asClip = false) {
                     doc.lineTo(pts[i][0], pts[i][1]);
                 doc.closePath();
                 if (!asClip)
-                    applyPaint(doc, props.fill, props.stroke, props.strokeWidth, props.opacity, defs);
+                    applyPaint(doc, props, defs);
             }
             break;
         }
@@ -279,11 +327,22 @@ function drawSvgNode(doc, node, defs, asClip = false) {
  * the top-left corner of the Yoga-allocated box.
  */
 export function drawSvg(doc, node) {
-    const { x = 0, y = 0 } = node.layout ?? {};
+    const { x = 0, y = 0, width = 0, height = 0 } = node.layout ?? {};
     // Collection pass: build defs registry before any drawing occurs.
     const defs = collectDefs(node.children, doc);
     doc.save();
     doc.translate(x, y);
+    // viewBox: uniformly scale + translate the user coordinate space so
+    // "min-x min-y width height" maps into the width×height layout box
+    // (preserveAspectRatio xMidYMid meet, without the centering offset).
+    const vb = parseViewBox(node.props?.viewBox);
+    if (vb && vb.width > 0 && vb.height > 0) {
+        const scale = Math.min(width / vb.width, height / vb.height);
+        if (Number.isFinite(scale) && scale > 0) {
+            doc.scale(scale);
+            doc.translate(-vb.minX, -vb.minY);
+        }
+    }
     for (const child of node.children) {
         if (child.type !== 'svg_defs')
             drawSvgNode(doc, child, defs);

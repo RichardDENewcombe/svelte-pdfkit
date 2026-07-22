@@ -8,11 +8,14 @@
 	const {
 		width,
 		height,
+		viewBox,
 		style = {},
 		children
 	}: {
 		width: number;
 		height: number;
+		/** "min-x min-y width height" — scales the SVG coordinate space to fit width×height. */
+		viewBox?: string;
 		style?: Omit<StyleProps, 'width' | 'height'>;
 		children?: Snippet;
 	} = $props();
@@ -23,7 +26,7 @@
 	// Its children are SVG elements stored in node.children, not Yoga nodes.
 	const node: PDFNode = {
 		type: 'svg',
-		props: { style: { width, height, ...style } },
+		props: { style: { width, height, ...style }, viewBox },
 		children: []
 	};
 	parent.children.push(node);

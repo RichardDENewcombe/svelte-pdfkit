@@ -139,13 +139,14 @@ than one is given: `render` → `text` → children.
 ### SVG (vector graphics) — `style` not used; props are SVG coords
 
 ```
-<Svg width height style>
+<Svg width height viewBox? style>
   <Rect x y width height rx ry fill stroke strokeWidth opacity clipPath />
   <Circle cx cy r ... />   <Ellipse cx cy rx ry ... />
   <Line x1 y1 x2 y2 stroke strokeWidth />
   <Polyline points fill stroke strokeWidth />   <Polygon points ... />
   <Path d fill stroke strokeWidth fillRule fillOpacity strokeOpacity />
   <G fill stroke strokeWidth opacity> ...children... </G>
+  <!-- All shapes also accept strokeDasharray ("4 2" | number) + strokeDashoffset for dashed strokes. -->
   <Defs>
     <LinearGradient id x1 y1 x2 y2> <Stop offset stopColor stopOpacity /> ... </LinearGradient>
     <RadialGradient id cx cy r fx? fy?> <Stop .../> </RadialGradient>

@@ -4,6 +4,8 @@ type $$ComponentProps = {
     stroke?: string;
     strokeWidth?: number;
     opacity?: number;
+    strokeDasharray?: number | string;
+    strokeDashoffset?: number;
     clipPath?: string;
 };
 declare const Polyline: import("svelte").Component<$$ComponentProps, {}, "">;

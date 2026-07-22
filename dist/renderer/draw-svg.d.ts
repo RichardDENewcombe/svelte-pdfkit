@@ -16,6 +16,17 @@ export declare function parsePoints(points: string): [number, number][];
  */
 export declare function parseUrlRef(value: string | undefined): string | null;
 /**
+ * Parses an SVG `viewBox` ("min-x min-y width height") into its four numbers.
+ * Accepts comma- or space-separated values. Returns `null` if it isn't four
+ * finite numbers.
+ */
+export declare function parseViewBox(value: string | undefined): {
+    minX: number;
+    minY: number;
+    width: number;
+    height: number;
+} | null;
+/**
  * Renders an `svg` PDFNode at its Yoga-computed position.
  *
  * All SVG child coordinates are relative to the SVG viewport origin.

@@ -6,6 +6,8 @@ type $$ComponentProps = {
     stroke?: string;
     strokeWidth?: number;
     opacity?: number;
+    strokeDasharray?: number | string;
+    strokeDashoffset?: number;
     clipPath?: string;
 };
 declare const Line: import("svelte").Component<$$ComponentProps, {}, "">;

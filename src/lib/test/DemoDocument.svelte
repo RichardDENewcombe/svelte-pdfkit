@@ -745,10 +745,20 @@
 			<Svg width={200} height={80}>
 				<!-- horizontal -->
 				<Line x1={10} y1={20} x2={190} y2={20} stroke={brand} strokeWidth={2} />
-				<!-- vertical -->
-				<Line x1={100} y1={0} x2={100} y2={80} stroke="#16a34a" strokeWidth={2} />
-				<!-- diagonal -->
-				<Line x1={10} y1={70} x2={190} y2={10} stroke="#ef4444" strokeWidth={1.5} opacity={0.8} />
+				<!-- dashed horizontal -->
+				<Line x1={10} y1={40} x2={190} y2={40} stroke="#16a34a" strokeWidth={2} strokeDasharray="6 3" />
+				<!-- dashed diagonal with dash offset -->
+				<Line
+					x1={10}
+					y1={70}
+					x2={190}
+					y2={55}
+					stroke="#ef4444"
+					strokeWidth={1.5}
+					strokeDasharray="2 2"
+					strokeDashoffset={1}
+					opacity={0.8}
+				/>
 			</Svg>
 		</View>
 
@@ -821,6 +831,34 @@
 				strokeWidth={2}
 			/>
 		</Svg>
+	</View>
+
+	<!-- ── Row 4b: viewBox (same 0..100 art, three scales) & dashed rect ──── -->
+	<View style={{ marginBottom: 20 }}>
+		<Text text="viewBox" style={{ fontFamily: 'Helvetica-Bold', fontSize: 10, color: brand, marginBottom: 6 }} />
+		<Text
+			text="Identical 0..100 SVG coordinates scale to fit each box via viewBox. The dashed rect uses strokeDasharray in user units."
+			style={{ fontFamily: 'Helvetica-Oblique', fontSize: 8, color: muted, marginBottom: 6 }}
+		/>
+		<View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
+			{#each [60, 90, 120] as boxSize}
+				<Svg width={boxSize} height={boxSize} viewBox="0 0 100 100">
+					<!-- Coordinates never change; only the viewBox → box mapping does. -->
+					<Rect
+						x={5}
+						y={5}
+						width={90}
+						height={90}
+						fill="none"
+						stroke={brand}
+						strokeWidth={2}
+						strokeDasharray="8 4"
+					/>
+					<Circle cx={50} cy={50} r={30} fill="#dbeafe" stroke={brand} strokeWidth={2} />
+					<Line x1={50} y1={20} x2={50} y2={80} stroke="#ef4444" strokeWidth={2} />
+				</Svg>
+			{/each}
+		</View>
 	</View>
 
 	<!-- ── Row 5: G (group with shared style) ────────────────────────────── -->

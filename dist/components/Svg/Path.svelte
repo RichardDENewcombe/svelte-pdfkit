@@ -10,6 +10,8 @@
 		opacity,
 		fillOpacity,
 		strokeOpacity,
+		strokeDasharray,
+		strokeDashoffset,
 		clipPath
 	}: {
 		d: string;
@@ -19,13 +21,15 @@
 		opacity?: number;
 		fillOpacity?: number;
 		strokeOpacity?: number;
+		strokeDasharray?: number | string;
+		strokeDashoffset?: number;
 		clipPath?: string;
 	} = $props();
 
 	const parent = getContext<PDFNode>('__svg__');
 	parent.children.push({
 		type: 'svg_path',
-		props: { d, fill, stroke, strokeWidth, opacity, fillOpacity, strokeOpacity, clipPath },
+		props: { d, fill, stroke, strokeWidth, opacity, fillOpacity, strokeOpacity, strokeDasharray, strokeDashoffset, clipPath },
 		children: []
 	});
 </script>

@@ -8,6 +8,8 @@
 		stroke,
 		strokeWidth,
 		opacity,
+		strokeDasharray,
+		strokeDashoffset,
 		clipPath
 	}: {
 		points: string;
@@ -15,13 +17,15 @@
 		stroke?: string;
 		strokeWidth?: number;
 		opacity?: number;
+		strokeDasharray?: number | string;
+		strokeDashoffset?: number;
 		clipPath?: string;
 	} = $props();
 
 	const parent = getContext<PDFNode>('__svg__');
 	parent.children.push({
 		type: 'svg_polyline',
-		props: { points, fill, stroke, strokeWidth, opacity, clipPath },
+		props: { points, fill, stroke, strokeWidth, opacity, strokeDasharray, strokeDashoffset, clipPath },
 		children: []
 	});
 </script>

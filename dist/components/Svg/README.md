@@ -30,19 +30,22 @@ coordinates are treated as PDF points directly.
 
 ## `<Svg>` — container
 
-| Prop     | Type         | Description                                          |
-| -------- | ------------ | ---------------------------------------------------- |
-| `width`  | `number`     | Layout box width (**required**)                      |
-| `height` | `number`     | Layout box height (**required**)                     |
-| `style`  | `StyleProps` | Extra layout props (margin, position, …); `width`/`height` are set via the dedicated props |
-
-> `viewBox` support follows the SVG model described above; omit it to use point
-> coordinates directly.
+| Prop      | Type         | Description                                          |
+| --------- | ------------ | ---------------------------------------------------- |
+| `width`   | `number`     | Layout box width (**required**)                      |
+| `height`  | `number`     | Layout box height (**required**)                     |
+| `viewBox` | `string`     | `"min-x min-y width height"` — uniformly scales + translates the SVG coordinate space to fit the box (`xMidYMid meet`). Omit to use point coordinates directly. |
+| `style`   | `StyleProps` | Extra layout props (margin, position, …); `width`/`height` are set via the dedicated props |
 
 ## Shapes
 
-All shapes accept `fill`, `stroke`, `strokeWidth`, `opacity`, and `clipPath`
-(`"url(#id)"`) unless noted.
+All shapes accept `fill`, `stroke`, `strokeWidth`, `opacity`, `clipPath`
+(`"url(#id)"`), and stroke-dash props unless noted.
+
+Dashed strokes are controlled with `strokeDasharray` (a `number`, or an SVG
+dash string such as `"4 2"` / `"4,2"`) and an optional `strokeDashoffset`
+(`number`, maps to the PDF dash phase). Non-positive / non-finite lengths are
+dropped; `"none"` (or nothing usable) renders a solid stroke.
 
 | Component    | Specific props                                        | Maps to                          |
 | ------------ | ----------------------------------------------------- | -------------------------------- |

@@ -10,6 +10,8 @@ type $$ComponentProps = {
     opacity?: number;
     textAnchor?: 'start' | 'middle' | 'end';
     dominantBaseline?: string;
+    /** Clockwise rotation in degrees, applied about the (x, y) anchor. */
+    rotate?: number;
     children?: Snippet;
 };
 declare const SvgText: import("svelte").Component<$$ComponentProps, {}, "">;

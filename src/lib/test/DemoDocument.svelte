@@ -1707,6 +1707,31 @@
 
 	<View style={{ marginTop: 16, marginBottom: 16, borderWidth: 0.5, borderColor: border }} />
 
+	<!-- ── Rotated text (rotate) ─────────────────────────────────────────── -->
+	<Text
+		text="Rotated text (rotate)"
+		style={{ fontFamily: 'Helvetica-Bold', fontSize: 11, color: brand, marginBottom: 8 }}
+	/>
+	<Text
+		text="The rotate prop turns text clockwise in degrees about its (x, y) anchor — ideal for vertical axis titles and gutter labels. Combine with textAnchor='middle' to spin a label in place."
+		style={{ fontFamily: 'Helvetica-Oblique', fontSize: 8, color: muted, marginBottom: 8 }}
+	/>
+	<Svg width={515} height={120}>
+		<!-- Baseline reference for the flat label -->
+		<Line x1={30} y1={100} x2={485} y2={100} stroke={border} strokeWidth={0.75} />
+
+		<!-- Vertical axis title: -90° reads bottom-to-top -->
+		<SvgText x={16} y={60} text="Y axis (rotate=-90)" fontSize={10} fill={brand} textAnchor="middle" rotate={-90} />
+
+		<!-- A fan of angles about a shared anchor -->
+		<SvgText x={160} y={60} text="0°"   fontSize={11} fill="black"    textAnchor="middle" rotate={0} />
+		<SvgText x={260} y={60} text="45°"  fontSize={11} fill="#16a34a" textAnchor="middle" rotate={45} />
+		<SvgText x={360} y={60} text="90°"  fontSize={11} fill="#ef4444" textAnchor="middle" rotate={90} />
+		<SvgText x={455} y={60} text="180°" fontSize={11} fill={muted}   textAnchor="middle" rotate={180} />
+	</Svg>
+
+	<View style={{ marginTop: 16, marginBottom: 16, borderWidth: 0.5, borderColor: border }} />
+
 	<!-- ── Tspan: inline style overrides ─────────────────────────────────── -->
 	<Text
 		text="Mixed styling with Tspan"

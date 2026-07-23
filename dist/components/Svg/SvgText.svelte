@@ -14,6 +14,7 @@
 		opacity,
 		textAnchor,
 		dominantBaseline,
+		rotate,
 		children
 	}: {
 		x?: number;
@@ -26,13 +27,15 @@
 		opacity?: number;
 		textAnchor?: 'start' | 'middle' | 'end';
 		dominantBaseline?: string;
+		/** Clockwise rotation in degrees, applied about the (x, y) anchor. */
+		rotate?: number;
 		children?: Snippet;
 	} = $props();
 
 	const parent = getContext<PDFNode>('__svg__');
 	const node: PDFNode = {
 		type: 'svg_text',
-		props: { x, y, text, fontSize, fontFamily, fontWeight, fill, opacity, textAnchor, dominantBaseline },
+		props: { x, y, text, fontSize, fontFamily, fontWeight, fill, opacity, textAnchor, dominantBaseline, rotate },
 		children: []
 	};
 	parent.children.push(node);

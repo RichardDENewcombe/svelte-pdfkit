@@ -25,6 +25,8 @@
 					<Tspan text="Line one" />
 					<Tspan text="Line two" dy={14} />
 				</SvgText>
+				<!-- rotated text -->
+				<SvgText x={250} y={60} text="Rotated" fontSize={12} textAnchor="middle" rotate={-90} fill="green" />
 			</Svg>
 		</View>
 	</Page>

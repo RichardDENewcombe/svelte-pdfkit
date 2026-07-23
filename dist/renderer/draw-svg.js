@@ -249,7 +249,11 @@ function drawSvgNode(doc, node, defs, asClip = false) {
             break;
         }
         case 'svg_text': {
-            const { x = 0, y = 0, text, fontSize = 12, fontFamily = 'Helvetica', fontWeight, fill, opacity, textAnchor = 'start' } = props;
+            const { x = 0, y = 0, text, fontSize = 12, fontFamily = 'Helvetica', fontWeight, fill, opacity, textAnchor = 'start', rotate } = props;
+            // Rotate about the anchor so a textAnchor="middle" label spins in place.
+            // Scoped by the enclosing doc.save()/restore(), so it never leaks to siblings.
+            if (rotate != null)
+                doc.rotate(rotate, { origin: [x, y] });
             const fontName = resolveFont(fontFamily, fontWeight, undefined);
             try {
                 doc.font(fontName);

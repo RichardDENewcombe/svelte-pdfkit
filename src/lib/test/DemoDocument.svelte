@@ -79,6 +79,13 @@
 
 	const allItems = [...items, ...extraRows];
 
+	// Rows for the "Deferred Row Padding" demo — see that page's section
+	// comment for what this exercises.
+	const fieldRows = Array.from({ length: 6 }, (_, i) => ({
+		label: `Field ${i + 1}`,
+		value: `Value ${i + 1}`,
+	}));
+
 	// ── Colours ────────────────────────────────────────────────────────────────
 	const brand  = '#1a56db';
 	const subtle = '#f3f4f6';
@@ -665,6 +672,99 @@
 			style={{ fontFamily: 'Helvetica', fontSize: 11, lineHeight: 1.5, color: '#1e3a8a' }}
 		/>
 	</View>
+
+	<!-- Fixed footer -->
+	<View
+		fixed={true}
+		style={{ position: 'absolute', bottom: 20, left: 40, right: 40, flexDirection: 'row', justifyContent: 'space-between' }}
+	>
+		<Text
+			text="Acme Corp · Confidential"
+			style={{ fontFamily: 'Helvetica-Oblique', fontSize: 8, color: muted }}
+		/>
+		<Text
+			render={pageFooter}
+			style={{ fontFamily: 'Helvetica', fontSize: 8, color: muted }}
+		/>
+	</View>
+
+</Page>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<!-- Deferred Row Padding page                                              -->
+<!--                                                                        -->
+<!-- Regression demo for issue #12: a row deferred WHOLE to the next page — -->
+<!-- because none of its lines fit before the break, so orphan control      -->
+<!-- returns null for it rather than splitting it — must keep its own       -->
+<!-- paddingTop on arrival, exactly as if it had started fresh at the top   -->
+<!-- of a page. Proven by contrast: the row list below is pushed right up   -->
+<!-- against this page's bottom edge, so the last row is deferred whole to  -->
+<!-- the next page, landing as the FIRST row there, immediately followed by -->
+<!-- ordinary (never-deferred) rows in the same style. If the fix works,    -->
+<!-- that first row's text sits exactly as far below its own top edge as    -->
+<!-- every row beneath it — no seam at the page break.                     -->
+<!--                                                                        -->
+<!-- The <View style={{ height: N }}> spacer controls exactly where the     -->
+<!-- boundary falls. Verified working range is 450–462pt; adjust if the     -->
+<!-- content above this section changes height.                             -->
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<Page size="A4" style={{ padding: 40 }}>
+
+	<!-- Title -->
+	<Text
+		text="Deferred Row Padding"
+		bookmark="Deferred Row Padding"
+		style={{ fontFamily: 'Helvetica-Bold', fontSize: 20, color: brand, marginBottom: 4 }}
+	/>
+	<Text
+		text="A row deferred whole to the next page — because none of its lines fit before the break — keeps its own paddingTop, exactly as if it had started fresh at the top of a page."
+		style={{ fontFamily: 'Helvetica-Oblique', fontSize: 9, color: muted, marginBottom: 20 }}
+	/>
+
+	<!-- What to look for -->
+	<Text
+		text="What to look for"
+		style={{ fontFamily: 'Helvetica-Bold', fontSize: 11, color: brand, marginBottom: 6 }}
+	/>
+	<View style={{ backgroundColor: subtle, padding: 12, borderRadius: 4, marginBottom: 16 }}>
+		<Text
+			text="The row list below is pushed right up against this page's bottom edge, so its last row has too little room before the break to show even one line — the paginator defers that entire row, whole, to the next page."
+			style={{ fontFamily: 'Helvetica', fontSize: 9, color: brand, marginBottom: 4 }}
+		/>
+		<Text
+			text="Compare the top of the next page: the first row (the deferred one) sits exactly as far below its own top edge as every row beneath it — no visible seam at the page break, and its border is drawn normally rather than being cut."
+			style={{ fontFamily: 'Helvetica', fontSize: 9, color: brand }}
+		/>
+	</View>
+
+	<!-- Demo header -->
+	<Text
+		text="Live demo"
+		style={{ fontFamily: 'Helvetica-Bold', fontSize: 11, color: brand, marginBottom: 4 }}
+	/>
+	<Text
+		text="Every row below shares the same paddingTop / paddingBottom. Watch the first row on the next page — it should match its neighbours exactly."
+		style={{ fontFamily: 'Helvetica-Oblique', fontSize: 9, color: muted, marginBottom: 10 }}
+	/>
+
+	<!-- Spacer — see the file-level comment above this page for tuning notes. -->
+	<View style={{ height: 455 }} />
+
+	{#each fieldRows as row, i}
+		<View
+			style={{
+				flexDirection: 'row',
+				paddingTop: 2.5,
+				paddingBottom: 2.5,
+				borderBottomWidth: 0.5,
+				borderColor: border,
+				backgroundColor: i % 2 === 0 ? 'white' : subtle
+			}}
+		>
+			<Text text={row.label} style={{ fontFamily: 'Helvetica-Bold', fontSize: 9, flexGrow: 1 }} />
+			<Text text={row.value} style={{ fontFamily: 'Helvetica', fontSize: 9 }} />
+		</View>
+	{/each}
 
 	<!-- Fixed footer -->
 	<View

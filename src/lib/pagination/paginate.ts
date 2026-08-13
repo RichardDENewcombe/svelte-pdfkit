@@ -154,6 +154,15 @@ function paginatePage(page: PDFNode): PDFNode[] {
 	// from one page are reflected accurately on the next.
 	const nodeProgress = new Map<PDFNode, number>();
 
+	// Tracks which nodes have actually emitted visible content on an earlier
+	// page slot. Distinguishes a node that's a genuine mid-content
+	// continuation (already partly drawn — flush to the top, no padding) from
+	// one that was pushed to this page wholesale and is appearing for the
+	// first time (e.g. deferred whole by orphan control) — which should keep
+	// its own padding, exactly as if it started fresh at the top of a page.
+	// See sliceNode() for how this is used.
+	const renderedBefore = new Set<PDFNode>();
+
 	let yStart = 0;
 	let pageIndex = 0;
 
@@ -189,7 +198,7 @@ function paginatePage(page: PDFNode): PDFNode[] {
 
 		const slicedChildren = page.children
 			.filter((c) => !c.props.fixed)
-			.map((child) => sliceNode(child, yStart, yEnd, yOffset, nodeProgress))
+			.map((child) => sliceNode(child, yStart, yEnd, yOffset, nodeProgress, renderedBefore))
 			.filter((c): c is PDFNode => c !== null);
 
 		// Always emit the first page even if empty (a <Page> with no content is
@@ -243,13 +252,17 @@ function hasBoxDecoration(style: Record<string, any>): boolean {
  * placed on previous pages.  Using explicit progress rather than inferring
  * from y-coordinates ensures widow/orphan adjustments on one page are
  * correctly reflected on subsequent pages.
+ *
+ * `renderedBefore` tracks which nodes have already emitted visible content
+ * on an earlier page slot (see the field's doc comment in paginatePage()).
  */
 function sliceNode(
 	node: PDFNode,
 	yStart: number,
 	yEnd: number,
 	yOffset = 0,
-	nodeProgress = new Map<PDFNode, number>()
+	nodeProgress = new Map<PDFNode, number>(),
+	renderedBefore = new Set<PDFNode>()
 ): PDFNode | null {
 	// Fixed nodes are handled separately — exclude from flow slicing.
 	if (node.props.fixed) return null;
@@ -260,12 +273,39 @@ function sliceNode(
 	const nodeTop = layout.y;
 	const nodeBottom = layout.y + layout.height;
 
-	// Completely above or below this page slot — exclude.
+	// Completely above or below this page slot — exclude. This check must use
+	// the real yStart/yEnd (true page geometry), not the substituted
+	// reference computed below.
 	if (nodeBottom <= yStart || nodeTop >= yEnd) return null;
+
+	// A node that starts before this page's real slot (nodeTop < yStart) is
+	// normally a genuine continuation of content already drawn on an earlier
+	// page, and correctly flushes to the top of this page's band with no gap.
+	// But a node pushed here WHOLESALE — nothing of its subtree was ever
+	// actually drawn before, e.g. because orphan control deferred its text
+	// entirely — should render exactly as it would if it started fresh at the
+	// top of a page, keeping its own padding and other Yoga-relative offsets.
+	// Substituting the node's own top for yStart as the position reference
+	// for it and its descendants achieves that: it's the same "constant
+	// delta" shift the nodeTop >= yStart path already gets for free, applied
+	// uniformly down the subtree. Safe at any depth because marking
+	// propagates — a child only contributes when its parent also returns
+	// non-null (and gets marked too), so an unmarked ancestor can never
+	// contain a marked descendant.
+	const shownBefore = renderedBefore.has(node);
+	const refStart = !shownBefore && nodeTop < yStart ? nodeTop : yStart;
+
+	// Marks `node` as having emitted visible content, so later pages know
+	// this was a real continuation rather than a fresh deferral. Call
+	// immediately before every non-null return below.
+	const mark = <T,>(result: T): T => {
+		renderedBefore.add(node);
+		return result;
+	};
 
 	// Shift y so it is relative to this page's top edge, then apply the
 	// padding offset so content lands in the correct position on overflow pages.
-	const adjustedLayout = { ...layout, y: layout.y - yStart + yOffset };
+	const adjustedLayout = { ...layout, y: layout.y - refStart + yOffset };
 
 	// ── Text splitting ────────────────────────────────────────────────────────
 	// Text nodes that straddle a page boundary are split at the line level so
@@ -290,7 +330,7 @@ function sliceNode(
 			const linesBefore = nodeProgress.get(node) ?? 0;
 
 			// Top of the visible portion of this text node within this page slot.
-			const visibleTop = Math.max(nodeTop, yStart);
+			const visibleTop = Math.max(nodeTop, refStart);
 
 			// Lines available in the remaining vertical space on this page.
 			const linesAvailable = Math.max(0, Math.floor((yEnd - visibleTop) / lineHeight));
@@ -348,15 +388,15 @@ function sliceNode(
 				newProps.justifyLines = pageLines;
 			}
 
-			return {
+			return mark({
 				...node,
 				props: newProps,
 				layout: {
 					...layout,
-					y: visibleTop - yStart + yOffset,
+					y: visibleTop - refStart + yOffset,
 					height: pageLines.length * lineHeight
 				}
-			};
+			});
 		}
 	}
 
@@ -364,12 +404,14 @@ function sliceNode(
 	// SVG nodes are also treated as leaves: their children are SVG elements
 	// with no Yoga layout and must not be recursed into.
 	if (node.children.length === 0 || node.type === 'svg') {
-		return { ...node, layout: adjustedLayout };
+		return mark({ ...node, layout: adjustedLayout });
 	}
 
-	// Container — recurse into children.
+	// Container — recurse into children, passing refStart down so a fresh
+	// subtree's descendants are positioned relative to the container's own
+	// top rather than clamped independently against the real page boundary.
 	const slicedChildren = node.children
-		.map((child) => sliceNode(child, yStart, yEnd, yOffset, nodeProgress))
+		.map((child) => sliceNode(child, refStart, yEnd, yOffset, nodeProgress, renderedBefore))
 		.filter((c): c is PDFNode => c !== null);
 
 	// If the node had children but all were excluded from this page slot, there
@@ -392,15 +434,21 @@ function sliceNode(
 	// react-pdf's splitNode(). nodeTop/nodeBottom are in original Yoga space;
 	// the slot spans [yStart, yEnd], which maps to [yOffset, yEnd-yStart+yOffset]
 	// in this page's adjusted coordinates.
+	// nodeTop < refStart is only ever true when shownBefore is also true (a
+	// genuine continuation) — when the node is a fresh deferral, refStart was
+	// substituted to equal nodeTop, so this never fires and the border/corner
+	// radii are correctly left intact.
 	const decorated = hasBoxDecoration(node.props.style ?? {});
-	const cutTop = decorated && nodeTop < yStart;
+	const cutTop = decorated && nodeTop < refStart;
 	const cutBottom = decorated && nodeBottom > yEnd;
 
 	let effectiveLayout = adjustedLayout;
 	if (cutTop || cutBottom) {
 		const style = node.props.style ?? {};
 		const slotTopAdj = yOffset;
-		const slotBotAdj = yEnd - yStart + yOffset;
+		// Mirrors adjustedLayout's reference (refStart, not the real yStart) so
+		// the top and bottom of a cut box stay in the same coordinate space.
+		const slotBotAdj = yEnd - refStart + yOffset;
 		const top = cutTop ? slotTopAdj : adjustedLayout.y;
 		let bottom = cutBottom ? slotBotAdj : adjustedLayout.y + adjustedLayout.height;
 
@@ -443,7 +491,7 @@ function sliceNode(
 			? { ...node.props, ...(cutTop && { __cutTop: true }), ...(cutBottom && { __cutBottom: true }) }
 			: node.props;
 
-	return { ...node, props: newProps, layout: effectiveLayout, children: slicedChildren };
+	return mark({ ...node, props: newProps, layout: effectiveLayout, children: slicedChildren });
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────

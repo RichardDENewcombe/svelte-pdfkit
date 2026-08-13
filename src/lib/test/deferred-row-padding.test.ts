@@ -75,6 +75,16 @@ function findFirst(node: PDFNode, type: string): PDFNode | undefined {
 	return undefined;
 }
 
+function findAll(node: PDFNode, type: string): PDFNode[] {
+	const out: PDFNode[] = [];
+	function walk(n: PDFNode) {
+		if (n.type === type) out.push(n);
+		n.children.forEach(walk);
+	}
+	walk(node);
+	return out;
+}
+
 // ── Full deferral: fresh appearance must keep its own padding ─────────────────
 
 describe('deferred row keeps its own top padding (issue #12)', () => {
@@ -176,5 +186,60 @@ describe('a row that genuinely straddles a page break (non-regression)', () => {
 		expect(pages).toHaveLength(2);
 		const rowP2 = findFirst(pages[1], 'view')!;
 		expect(rowP2.props.__cutTop).toBe(true);
+	});
+});
+
+// ── Sibling spacing after a deferred row (issue #12 follow-up) ────────────────
+//
+// A first fix repositioned a deferred row's own subtree correctly but used
+// each node's own top as its position reference independently — so a row
+// immediately following a deferred one, which is NOT itself deferred (its
+// own original top already sits at/after the real page boundary), was still
+// measured against the *real* yStart while the deferred row ahead of it was
+// measured against its *own* substituted top. The two references differed,
+// so the deferred row's neighbour landed too close to it — everywhere else
+// on the page the row-to-row gap was correct; only the transition right
+// after a deferred row was compressed.
+
+describe('a row immediately after a deferred row keeps the normal gap (issue #12 follow-up)', () => {
+	it('the row following a fully-deferred row is not crowded against it', () => {
+		const lh = getLineHeight(BASE_STYLE);
+		const rowHeight = ROW_PAD + lh + ROW_PAD;
+
+		// Row 2's text has less than one line height of room before the
+		// boundary — deferred whole, exactly like the single-row case above.
+		const row2TextY = CONTENT_END - lh * 0.5;
+		// Row 1 precedes it by one natural row height (steady content, not
+		// deferred). Row 3 follows it by one natural row height, in the
+		// original continuous Yoga layout — as if the three rows were part of
+		// the same table with no gaps between them.
+		const row1TextY = row2TextY - rowHeight;
+		const row3TextY = row2TextY + rowHeight;
+
+		const row1 = makeRow(row1TextY, lh, { backgroundColor: '#eee' }, 'Row 1');
+		const row2 = makeRow(row2TextY, lh, { backgroundColor: '#eee' }, 'Row 2');
+		const row3 = makeRow(row3TextY, lh, { backgroundColor: '#eee' }, 'Row 3');
+
+		const pages = paginate(makeDoc([row1, row2, row3]));
+
+		expect(pages).toHaveLength(2);
+		// Row 1 stays on page 1; rows 2 and 3 are deferred to page 2 — row 2
+		// because it doesn't fit, row 3 because it comes after it in the flow.
+		expect(findAll(pages[0], 'text').map((t) => t.props.text)).toEqual(['Row 1']);
+		expect(findAll(pages[1], 'text').map((t) => t.props.text)).toEqual(['Row 2', 'Row 3']);
+
+		const [rowOut2, rowOut3] = findAll(pages[1], 'view');
+
+		// Row 2 keeps its own padding (the original issue #12 symptom).
+		const textOut2 = findFirst(rowOut2, 'text')!;
+		expect(textOut2.layout!.y - rowOut2.layout!.y).toBeCloseTo(ROW_PAD, 5);
+
+		// Row 3's top sits exactly one row height below row 2's top — the same
+		// gap Yoga originally computed between them, not compressed by row 2
+		// having been repositioned.
+		expect(rowOut3.layout!.y - rowOut2.layout!.y).toBeCloseTo(rowHeight, 5);
+
+		// Neither row's box overlaps the other.
+		expect(rowOut3.layout!.y).toBeGreaterThanOrEqual(rowOut2.layout!.y + rowOut2.layout!.height - 1e-6);
 	});
 });

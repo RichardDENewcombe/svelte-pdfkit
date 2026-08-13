@@ -80,8 +80,9 @@
 	const allItems = [...items, ...extraRows];
 
 	// Rows for the "Deferred Row Padding" demo — see that page's section
-	// comment for what this exercises.
-	const fieldRows = Array.from({ length: 6 }, (_, i) => ({
+	// comment for what this exercises. A few rows follow the deferred one so
+	// the gap *after* it is visible too, not just its own top padding.
+	const fieldRows = Array.from({ length: 9 }, (_, i) => ({
 		label: `Field ${i + 1}`,
 		value: `Value ${i + 1}`,
 	}));
@@ -697,12 +698,17 @@
 <!-- because none of its lines fit before the break, so orphan control      -->
 <!-- returns null for it rather than splitting it — must keep its own       -->
 <!-- paddingTop on arrival, exactly as if it had started fresh at the top   -->
-<!-- of a page. Proven by contrast: the row list below is pushed right up   -->
-<!-- against this page's bottom edge, so the last row is deferred whole to  -->
-<!-- the next page, landing as the FIRST row there, immediately followed by -->
-<!-- ordinary (never-deferred) rows in the same style. If the fix works,    -->
-<!-- that first row's text sits exactly as far below its own top edge as    -->
-<!-- every row beneath it — no seam at the page break.                     -->
+<!-- of a page, AND must not crowd the row that follows it (the issue #12   -->
+<!-- follow-up: an earlier fix got the deferred row's own position right    -->
+<!-- but positioned its next sibling against a different reference,         -->
+<!-- shrinking the gap between the two). Proven by contrast: the row list   -->
+<!-- below is pushed right up against this page's bottom edge, so one row   -->
+<!-- is deferred whole to the next page, landing as the FIRST row there,    -->
+<!-- followed by several more ordinary (never-deferred) rows in the same    -->
+<!-- style. If the fix works, that first row's text sits exactly as far     -->
+<!-- below its own top edge as every row beneath it, AND the gap to the row -->
+<!-- immediately after it matches every other row-to-row gap on the page —  -->
+<!-- no seam and no crowding at the page break.                             -->
 <!--                                                                        -->
 <!-- The <View style={{ height: N }}> spacer controls exactly where the     -->
 <!-- boundary falls. Verified working range is 450–462pt; adjust if the     -->
@@ -732,7 +738,7 @@
 			style={{ fontFamily: 'Helvetica', fontSize: 9, color: brand, marginBottom: 4 }}
 		/>
 		<Text
-			text="Compare the top of the next page: the first row (the deferred one) sits exactly as far below its own top edge as every row beneath it — no visible seam at the page break, and its border is drawn normally rather than being cut."
+			text="Compare the top of the next page: the first row (the deferred one) sits exactly as far below its own top edge as every row beneath it — no visible seam at the page break, and its border is drawn normally rather than being cut. Check the gap to the row right after it too — it should match every other row-to-row gap on the page, not be crowded."
 			style={{ fontFamily: 'Helvetica', fontSize: 9, color: brand }}
 		/>
 	</View>

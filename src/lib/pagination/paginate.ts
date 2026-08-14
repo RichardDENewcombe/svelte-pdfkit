@@ -59,6 +59,24 @@ import { getLineHeight, wrapLinesMeta } from '../layout/text-measure.js';
  */
 const FOOTER_CLEARANCE = 15;
 
+/**
+ * Tolerance (in points) for comparing two independently Yoga-accumulated
+ * layout values that are mathematically expected to coincide — e.g. one
+ * row's bottom vs. the next row's top for a tightly-packed run, or a
+ * breakBefore node's own top vs. that same value reached through a
+ * different accumulation path. Yoga accumulates in float32, so such values
+ * can differ by a few millionths of a point even when "equal" by
+ * construction (see issue #15, where a real render captured a drift of
+ * ~8.6e-6 between two values that should have been identical). Comparing
+ * them with exact `>=` treated that noise as genuine overflow, and because
+ * the boundary-pulling loop in paginatePage() feeds each decision's result
+ * into the next comparison, the mistake self-reinforced into one-row-per-page
+ * cascades. LAYOUT_EPSILON is comfortably larger than that noise floor and
+ * comfortably smaller than any real single point of overflow that should
+ * legitimately trigger a page break.
+ */
+const LAYOUT_EPSILON = 0.1;
+
 // ── Public API ────────────────────────────────────────────────────────────────
 
 export function paginate(doc: DocumentContext): PDFNode[] {
@@ -705,6 +723,20 @@ function collectNoWrapPairs(page: PDFNode): KeepPair[] {
  * the real nodeProgress/renderedBefore bookkeeping, since it's only ever
  * used to decide where the *boundary* should land, not to actually render
  * anything.
+ *
+ * Deliberately NOT given the same LAYOUT_EPSILON tolerance as the
+ * wrap={false} self-pair check below (issue #15): nudging `yEnd` here would
+ * make this trial call disagree with the real, un-nudged sliceNode() calls
+ * in paginatePage()'s main rendering loop — a successor could be judged
+ * "renders" by the nudged trial yet still be excluded by the exact
+ * comparison when actually sliced, separating it from its keepWithNext
+ * node instead of preventing that. A theoretical analogous cascade for a
+ * tightly-packed chain of keepWithNext nodes remains possible in principle,
+ * but fixing it soundly needs the tolerance applied consistently wherever
+ * a node's fit is decided — a larger, riskier change than this file's
+ * central, heavily-tested slicing path warrants without a confirmed
+ * real-world case (unlike wrap={false}, which issue #15 captured directly
+ * from a production render).
  */
 function wouldRenderInSlot(node: PDFNode, yStart: number, yEnd: number): boolean {
 	return sliceNode(node, yStart, yEnd, 0, new Map(), new Set()) !== null;
@@ -723,8 +755,18 @@ function wouldRenderInSlot(node: PDFNode, yStart: number, yEnd: number): boolean
  *    via wouldRenderInSlot() rather than a raw bTop comparison, since a
  *    successor can vanish entirely to orphan control even when its own top
  *    clears the boundary (issue #14).
- *  - For wrap={false} self-pairs (bNode absent), "doesn't fit" is simply
- *    bTop >= yEnd — the node's own bottom doesn't clear the boundary.
+ *  - For wrap={false} self-pairs (bNode absent), "doesn't fit" is
+ *    `bTop - yEnd > LAYOUT_EPSILON` rather than the exact `bTop >= yEnd` —
+ *    for a tightly-packed run of siblings, a row's own bottom and the next
+ *    boundary are mathematically expected to coincide but are accumulated
+ *    independently through Yoga's layout tree, landing a few millionths of
+ *    a point apart (see issue #15). Comparing with exact `>=` treated that
+ *    noise as overflow, and because this loop feeds each `pulled` result
+ *    back into the next comparison (see paginatePage()), the mistake
+ *    self-reinforced into one-row-per-page cascades. A node whose bottom
+ *    lands exactly on `yEnd` fits — it touches the boundary, not crosses
+ *    it — so the tolerant strict `>` is also the intended semantics, not
+ *    just noise-absorption.
  *
  * Breaking at the smallest such aTop moves the kept node and everything
  * after it to the next page.
@@ -733,7 +775,7 @@ function findKeepWithNextBreak(pairs: KeepPair[], yStart: number, yEnd: number):
 	let pulled: number | null = null;
 	for (const { aTop, bTop, bNode } of pairs) {
 		if (aTop <= yStart || aTop >= yEnd) continue;
-		const violated = bNode ? !wouldRenderInSlot(bNode, yStart, yEnd) : bTop >= yEnd;
+		const violated = bNode ? !wouldRenderInSlot(bNode, yStart, yEnd) : bTop - yEnd > LAYOUT_EPSILON;
 		if (violated && (pulled === null || aTop < pulled)) pulled = aTop;
 	}
 	return pulled;

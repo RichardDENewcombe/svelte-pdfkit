@@ -1943,6 +1943,83 @@
 </Page>
 
 <!-- ══════════════════════════════════════════════════════════════════════ -->
+<!-- Tightly Packed Rows page                                              -->
+<!--                                                                        -->
+<!-- Regression demo for issue #15: a run of tightly-packed wrap={false}    -->
+<!-- rows immediately followed by a breakBefore section used to cascade     -->
+<!-- into one row per page — a floating-point equality bug in the           -->
+<!-- wrap={false} boundary check, not a logic bug. This is the exact shape  -->
+<!-- of the issue's own minimal repro: no filler or spacer tuning needed,   -->
+<!-- since breakBefore alone forces the pagination-splitting path to run.   -->
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<Page size="A4" style={{ padding: 40 }}>
+
+	<!-- Title -->
+	<Text
+		text="Tightly Packed Rows"
+		bookmark="Tightly Packed Rows"
+		style={{ fontFamily: 'Helvetica-Bold', fontSize: 20, color: brand, marginBottom: 4 }}
+	/>
+	<Text
+		text="A run of wrap={false} rows must pack normally, not scatter one row per page."
+		style={{ fontFamily: 'Helvetica-Oblique', fontSize: 9, color: muted, marginBottom: 20 }}
+	/>
+
+	<!-- What it does -->
+	<Text
+		text="What it does"
+		style={{ fontFamily: 'Helvetica-Bold', fontSize: 11, color: brand, marginBottom: 6 }}
+	/>
+	<Text
+		text="The wrap={false} boundary check used to compare a row's own bottom against the page boundary with exact floating-point equality. For a tightly-packed run of rows, each row's bottom and the next row's top are mathematically equal but land a few millionths of a point apart once accumulated through the layout engine — enough to make the exact comparison misfire, defer a row, and repeat the mistake on the row above it. A 26-page report with one such table ballooned to 43 pages of near-blank single-row pages. The fix tolerates that sub-point noise while still catching genuine overflow."
+		style={{ fontFamily: 'Helvetica', fontSize: 10, marginBottom: 16 }}
+	/>
+
+	<!-- Live demo intro -->
+	<Text
+		text="Live demo — 20 rows pack normally, section starts fresh"
+		style={{ fontFamily: 'Helvetica-Bold', fontSize: 11, color: brand, marginBottom: 4 }}
+	/>
+	<Text
+		text="Each row below carries wrap={false} and is immediately followed by a breakBefore section — the exact shape that used to cascade. All 20 rows should appear together below, packed with no gaps between them, and 'Next Section' should start cleanly on the following page."
+		style={{ fontFamily: 'Helvetica-Oblique', fontSize: 9, color: muted, marginBottom: 12 }}
+	/>
+
+	{#each Array.from({ length: 20 }) as _, i}
+		<View
+			wrap={false}
+			style={{ flexDirection: 'row', paddingTop: 2.5, paddingBottom: 2.5, borderBottomWidth: 0.5, borderColor: subtle }}
+		>
+			<Text text={`Row ${i + 1}`} style={{ width: '50%', fontSize: 9 }} />
+			<Text text="Packed" style={{ width: '50%', fontSize: 9 }} />
+		</View>
+	{/each}
+
+	<View breakBefore={true} style={{ marginTop: 16 }}>
+		<Text
+			text="Next Section"
+			style={{ fontFamily: 'Helvetica-Bold', fontSize: 13, color: '#16a34a' }}
+		/>
+	</View>
+
+	<!-- Fixed footer -->
+	<View
+		fixed={true}
+		style={{ position: 'absolute', bottom: 20, left: 40, right: 40, flexDirection: 'row', justifyContent: 'space-between' }}
+	>
+		<Text
+			text="Acme Corp · Confidential"
+			style={{ fontFamily: 'Helvetica-Oblique', fontSize: 8, color: muted }}
+		/>
+		<Text
+			render={pageFooter}
+			style={{ fontFamily: 'Helvetica', fontSize: 8, color: muted }}
+		/>
+	</View>
+
+</Page>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
 <!-- SVG Text page                                                          -->
 <!-- ══════════════════════════════════════════════════════════════════════ -->
 <Page size="A4" style={{ padding: 40 }}>

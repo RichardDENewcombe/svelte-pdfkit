@@ -1756,6 +1756,94 @@
 </Page>
 
 <!-- ══════════════════════════════════════════════════════════════════════ -->
+<!-- Keep-With-Next — orphan edge case page                                -->
+<!--                                                                        -->
+<!-- Demonstrates the issue #14 fix: keepWithNext used to fail silently     -->
+<!-- when its successor's raw top cleared the page boundary but its first   -->
+<!-- text line still had less than one line-height of room — orphan control -->
+<!-- (default orphans: 1) then deferred the successor's text entirely, and  -->
+<!-- the paginator's old bTop-only check never noticed, leaving the heading -->
+<!-- stranded alone.                                                        -->
+<!--                                                                        -->
+<!-- Live demo: the spacer is tuned so the body block's own top clears the  -->
+<!-- boundary comfortably, but its single text line does not — the exact    -->
+<!-- danger zone from the bug report. Before the fix this would strand the  -->
+<!-- heading; after the fix both move to the next page together.            -->
+<!--                                                                        -->
+<!-- The spacer height is tuned so the body's first line lands in that      -->
+<!-- danger zone; adjust it if the surrounding content above changes.       -->
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<Page size="A4" style={{ padding: 40 }}>
+
+	<!-- Title -->
+	<Text
+		text="Keep With Next — Orphan Edge Case"
+		bookmark="Keep With Next — Orphan Edge Case"
+		style={{ fontFamily: 'Helvetica-Bold', fontSize: 20, color: brand, marginBottom: 4 }}
+	/>
+	<Text
+		text="A keepWithNext edge case: the successor's raw top clears the page boundary, but its first line doesn't."
+		style={{ fontFamily: 'Helvetica-Oblique', fontSize: 9, color: muted, marginBottom: 20 }}
+	/>
+
+	<!-- What it does -->
+	<Text
+		text="What it does"
+		style={{ fontFamily: 'Helvetica-Bold', fontSize: 11, color: brand, marginBottom: 6 }}
+	/>
+	<Text
+		text="keepWithNext used to compare only the successor's raw Yoga top against the page boundary. But orphan control (default orphans: 1) can defer a text node entirely whenever fewer than one line fits in the remaining space — even when that node's own top is comfortably before the boundary. When that happens to a keepWithNext successor, the kept node used to stay behind alone while its content vanished to the next page anyway. The fix checks whether the successor would actually render anything, not just where its top sits."
+		style={{ fontFamily: 'Helvetica', fontSize: 10, marginBottom: 16 }}
+	/>
+
+	<!-- Live demo intro -->
+	<Text
+		text="Live demo — heading pulled forward even though the body's top clears the boundary"
+		style={{ fontFamily: 'Helvetica-Bold', fontSize: 11, color: brand, marginBottom: 4 }}
+	/>
+	<Text
+		text="The spacer below is tuned so the body block's own top sits comfortably above the page boundary, but its single text line has less than a line-height of room left — orphan control defers it entirely. Because the heading is marked keepWithNext, the paginator detects that the body would render nothing here and pulls the heading forward too, so both open cleanly together on the next page."
+		style={{ fontFamily: 'Helvetica-Oblique', fontSize: 9, color: muted, marginBottom: 8 }}
+	/>
+
+	<!--
+		Spacer: pushes the heading down so the body block's top clears the page
+		boundary but its first (only) text line does not. Tuned against the
+		content above; adjust if that content changes.
+	-->
+	<View style={{ height: 507 }} />
+
+	<!-- Heading marked keepWithNext, immediately followed by its body sibling. -->
+	<Text
+		text="Section 5: Orphan Edge Case  (keepWithNext)"
+		keepWithNext={true}
+		style={{ fontFamily: 'Helvetica-Bold', fontSize: 13, color: '#16a34a', marginBottom: 6 }}
+	/>
+	<View style={{ borderWidth: 1, borderColor: '#86efac', borderRadius: 4, padding: 8 }}>
+		<Text
+			text="This single line is the heading's following sibling."
+			style={{ fontFamily: 'Helvetica', fontSize: 10 }}
+		/>
+	</View>
+
+	<!-- Fixed footer -->
+	<View
+		fixed={true}
+		style={{ position: 'absolute', bottom: 20, left: 40, right: 40, flexDirection: 'row', justifyContent: 'space-between' }}
+	>
+		<Text
+			text="Acme Corp · Confidential"
+			style={{ fontFamily: 'Helvetica-Oblique', fontSize: 8, color: muted }}
+		/>
+		<Text
+			render={pageFooter}
+			style={{ fontFamily: 'Helvetica', fontSize: 8, color: muted }}
+		/>
+	</View>
+
+</Page>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
 <!-- No Wrap page                                                          -->
 <!--                                                                        -->
 <!-- Demonstrates the wrap={false} prop on <View>.  A view marked           -->

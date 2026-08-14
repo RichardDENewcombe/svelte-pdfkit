@@ -182,13 +182,18 @@ function paginatePage(page: PDFNode): PDFNode[] {
 		// keep-with-next: if the boundary would separate a kept node from the
 		// start of its successor, pull the break up to the kept node's top so
 		// both move to the next page together.  A pair is violated when the kept
-		// node (aTop) starts before the boundary but its successor (bTop) starts
-		// at or after it.  We only pull the break to aTop when aTop > yStart so we
-		// still make forward progress — if the kept node is already at the top of
-		// the page and its successor still doesn't fit, the pair is taller than a
-		// page and we let it break normally.  Looping handles chains (A→B→C) and
-		// pairs newly exposed as the boundary moves up; yEnd strictly decreases
-		// each pass and is bounded below by yStart, so it always terminates.
+		// node (aTop) starts before the boundary but its successor doesn't fit —
+		// for keep-with-next pairs that means the successor would render nothing
+		// at all in this slot (checked via wouldRenderInSlot(), not just its raw
+		// top, since orphan control can defer it entirely even when its top
+		// clears the boundary — issue #14); for wrap={false} self-pairs it means
+		// the node's own bottom doesn't clear the boundary.  We only pull the
+		// break to aTop when aTop > yStart so we still make forward progress —
+		// if the kept node is already at the top of the page and its successor
+		// still doesn't fit, the pair is taller than a page and we let it break
+		// normally.  Looping handles chains (A→B→C) and pairs newly exposed as
+		// the boundary moves up; yEnd strictly decreases each pass and is
+		// bounded below by yStart, so it always terminates.
 		let pulled = findKeepWithNextBreak(keepPairs, yStart, yEnd);
 		while (pulled !== null) {
 			yEnd = pulled;
@@ -594,17 +599,31 @@ function collectForcedBreaks(page: PDFNode): number[] {
  * findKeepWithNextBreak() below. Populated from two distinct sources:
  *
  *  - keep-with-next: aTop is the kept node's top, bTop is its following flow
- *    sibling's top — keeps the pair from being separated by a break landing
- *    between them (collectKeepWithNext()).
- *  - wrap={false}: aTop and bTop are the same node's own top and bottom —
- *    keeps the node itself from being sliced by a break landing inside it
- *    (collectNoWrapPairs()).
+ *    sibling's top, and bNode is that sibling node itself — keeps the pair
+ *    from being separated by a break landing between them
+ *    (collectKeepWithNext()).
+ *  - wrap={false}: aTop and bTop are the same node's own top and bottom, and
+ *    bNode is absent — keeps the node itself from being sliced by a break
+ *    landing inside it (collectNoWrapPairs()).
+ *
+ * bNode lets findKeepWithNextBreak() ask "would the successor actually
+ * render anything here" (via wouldRenderInSlot()) rather than trusting bTop
+ * alone — bTop can clear the boundary while the successor's content is still
+ * entirely orphan-deferred by sliceNode() (see issue #14). wrap={false}
+ * pairs have no separate node to trial-render — their own bTop >= yEnd check
+ * is already exact — so bNode is left undefined for them.
  */
 interface KeepPair {
 	/** Top edge (Yoga y) of the node carrying the constraint. */
 	aTop: number;
 	/** Bottom-of-range edge (Yoga y) the constraint must not be split from. */
 	bTop: number;
+	/**
+	 * The successor node itself, for keep-with-next pairs — used to check
+	 * whether it would actually render anything in a candidate slot instead
+	 * of just comparing bTop. Undefined for wrap={false} self-pairs.
+	 */
+	bNode?: PDFNode;
 }
 
 /**
@@ -627,7 +646,7 @@ function collectKeepWithNext(page: PDFNode): KeepPair[] {
 			if (child.props.keepWithNext && child.layout) {
 				const next = flowChildren[i + 1];
 				if (next?.layout) {
-					pairs.push({ aTop: child.layout.y, bTop: next.layout.y });
+					pairs.push({ aTop: child.layout.y, bTop: next.layout.y, bNode: next });
 				}
 			}
 			walk(child);
@@ -669,21 +688,53 @@ function collectNoWrapPairs(page: PDFNode): KeepPair[] {
 }
 
 /**
+ * Trial-slices `node` against a candidate slot [yStart, yEnd) using scratch
+ * progress/rendered-before state, to answer "would this node actually
+ * produce visible content in this slot" — as opposed to just comparing its
+ * raw Yoga top to the boundary.
+ *
+ * A node can have layout.y comfortably before yEnd and still render nothing:
+ * sliceNode()'s orphan-control branch defers a text node entirely when fewer
+ * than `orphans` lines fit before yEnd, and that null propagates up through
+ * any container whose only content was that text (see issue #14). Reusing
+ * sliceNode() itself keeps this in lockstep with the real slicing decision
+ * instead of re-deriving a second, potentially diverging estimate of "does
+ * it fit."
+ *
+ * The scratch Map/Set are thrown away after the call — this must not affect
+ * the real nodeProgress/renderedBefore bookkeeping, since it's only ever
+ * used to decide where the *boundary* should land, not to actually render
+ * anything.
+ */
+function wouldRenderInSlot(node: PDFNode, yStart: number, yEnd: number): boolean {
+	return sliceNode(node, yStart, yEnd, 0, new Map(), new Set()) !== null;
+}
+
+/**
  * Returns the smallest kept-node top that the current slot boundary would
  * separate from its successor, or null if no pair is violated.
  *
- * A pair (aTop, bTop) is violated when the kept node starts within this slot
- * (aTop > yStart, so pulling the break to aTop still advances) but before the
- * boundary (aTop < yEnd) while its successor lands at or beyond the boundary
- * (bTop >= yEnd).  Breaking at the smallest such aTop moves the kept node and
- * everything after it to the next page.
+ * A pair (aTop, bTop[, bNode]) is violated when the kept node starts within
+ * this slot (aTop > yStart, so pulling the break to aTop still advances) but
+ * before the boundary (aTop < yEnd) while its successor doesn't fit:
+ *
+ *  - For keep-with-next pairs (bNode present), "doesn't fit" means the
+ *    successor node would render nothing at all in [yStart, yEnd) — checked
+ *    via wouldRenderInSlot() rather than a raw bTop comparison, since a
+ *    successor can vanish entirely to orphan control even when its own top
+ *    clears the boundary (issue #14).
+ *  - For wrap={false} self-pairs (bNode absent), "doesn't fit" is simply
+ *    bTop >= yEnd — the node's own bottom doesn't clear the boundary.
+ *
+ * Breaking at the smallest such aTop moves the kept node and everything
+ * after it to the next page.
  */
 function findKeepWithNextBreak(pairs: KeepPair[], yStart: number, yEnd: number): number | null {
 	let pulled: number | null = null;
-	for (const { aTop, bTop } of pairs) {
-		if (aTop > yStart && aTop < yEnd && bTop >= yEnd) {
-			if (pulled === null || aTop < pulled) pulled = aTop;
-		}
+	for (const { aTop, bTop, bNode } of pairs) {
+		if (aTop <= yStart || aTop >= yEnd) continue;
+		const violated = bNode ? !wouldRenderInSlot(bNode, yStart, yEnd) : bTop >= yEnd;
+		if (violated && (pulled === null || aTop < pulled)) pulled = aTop;
 	}
 	return pulled;
 }

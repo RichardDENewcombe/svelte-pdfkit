@@ -1756,6 +1756,105 @@
 </Page>
 
 <!-- ══════════════════════════════════════════════════════════════════════ -->
+<!-- No Wrap page                                                          -->
+<!--                                                                        -->
+<!-- Demonstrates the wrap={false} prop on <View>.  A view marked           -->
+<!-- wrap={false} must never be sliced by a page break — if it doesn't fit  -->
+<!-- in the remaining space it moves whole to the next page instead.        -->
+<!--                                                                        -->
+<!-- Live demo: a spacer pushes a bordered box near the page boundary so it -->
+<!-- no longer fits on the current page.  Because the box carries           -->
+<!-- wrap={false}, the paginator moves it whole onto the next page rather   -->
+<!-- than cutting its border mid-box.                                      -->
+<!--                                                                        -->
+<!-- The spacer height is tuned so the box starts just past the boundary;   -->
+<!-- adjust it if the surrounding content above changes.                    -->
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<Page size="A4" style={{ padding: 40 }}>
+
+	<!-- Title -->
+	<Text
+		text="No Wrap"
+		bookmark="No Wrap"
+		style={{ fontFamily: 'Helvetica-Bold', fontSize: 20, color: brand, marginBottom: 4 }}
+	/>
+	<Text
+		text="Keep a box intact across a page break with the wrap prop on View."
+		style={{ fontFamily: 'Helvetica-Oblique', fontSize: 9, color: muted, marginBottom: 20 }}
+	/>
+
+	<!-- What it does -->
+	<Text
+		text="What it does"
+		style={{ fontFamily: 'Helvetica-Bold', fontSize: 11, color: brand, marginBottom: 6 }}
+	/>
+	<Text
+		text="A View marked wrap={false} must never be split across a page boundary. If the natural page break would land inside it, the paginator moves the whole view to the next page instead of cutting its content — and its border — mid-box."
+		style={{ fontFamily: 'Helvetica', fontSize: 10, marginBottom: 16 }}
+	/>
+
+	<!-- Prop reference -->
+	<View style={{ backgroundColor: subtle, padding: 12, borderRadius: 4, marginBottom: 16 }}>
+		<Text
+			text={'<View wrap={false} style={{ borderWidth: 1 }}>…block that must stay whole…</View>'}
+			style={{ fontFamily: 'Courier', fontSize: 9, color: brand, marginBottom: 8 }}
+		/>
+		<Text
+			text="Default is true (the box may split normally). If the box is taller than a whole page, the constraint cannot be satisfied and it splits normally once moved to a fresh page."
+			style={{ fontFamily: 'Helvetica-Oblique', fontSize: 8, color: muted }}
+		/>
+	</View>
+
+	<!-- Live demo intro -->
+	<Text
+		text="Live demo — bordered box moved whole to the next page"
+		style={{ fontFamily: 'Helvetica-Bold', fontSize: 11, color: brand, marginBottom: 4 }}
+	/>
+	<Text
+		text="The spacer below pushes the bordered box near the bottom of this page, where it no longer fits. Because the box is marked wrap={false}, the paginator detects it would otherwise be cut mid-border and moves it whole to the top of the next page instead."
+		style={{ fontFamily: 'Helvetica-Oblique', fontSize: 9, color: muted, marginBottom: 8 }}
+	/>
+
+	<!--
+		Spacer: pushes the bordered box down so it would start just past the page
+		boundary (≈792pt).  Tuned against the content above; adjust if that
+		content changes (raise to push lower, lower to pull up).
+	-->
+	<View style={{ height: 500 }} />
+
+	<!-- Bordered box marked wrap={false} — must move whole, never split. -->
+	<View
+		wrap={false}
+		style={{ borderWidth: 1, borderColor: '#86efac', borderRadius: 4, padding: 10 }}
+	>
+		<Text
+			text="Section 4: No Wrap  (wrap={false})"
+			style={{ fontFamily: 'Helvetica-Bold', fontSize: 13, color: '#16a34a', marginBottom: 6 }}
+		/>
+		<Text
+			text="This box carries wrap={false}. Because it didn't fit beneath the spacer above, the paginator moved it whole onto this fresh page — its border is intact on all four sides, not cut where a normal page break would have landed."
+			style={{ fontFamily: 'Helvetica', fontSize: 10, lineHeight: 1.35 }}
+		/>
+	</View>
+
+	<!-- Fixed footer -->
+	<View
+		fixed={true}
+		style={{ position: 'absolute', bottom: 20, left: 40, right: 40, flexDirection: 'row', justifyContent: 'space-between' }}
+	>
+		<Text
+			text="Acme Corp · Confidential"
+			style={{ fontFamily: 'Helvetica-Oblique', fontSize: 8, color: muted }}
+		/>
+		<Text
+			render={pageFooter}
+			style={{ fontFamily: 'Helvetica', fontSize: 8, color: muted }}
+		/>
+	</View>
+
+</Page>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
 <!-- SVG Text page                                                          -->
 <!-- ══════════════════════════════════════════════════════════════════════ -->
 <Page size="A4" style={{ padding: 40 }}>

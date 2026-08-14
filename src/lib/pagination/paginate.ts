@@ -136,8 +136,12 @@ function paginatePage(page: PDFNode): PDFNode[] {
 	const forcedBreaks = collectForcedBreaks(page);
 
 	// keep-with-next pairs: a node that must stay on the same page as the start
-	// of its following sibling (e.g. a heading kept with its body text).
-	const keepPairs = collectKeepWithNext(page);
+	// of its following sibling (e.g. a heading kept with its body text). Merged
+	// with wrap={false} self-pairs — a node that must not be sliced by a break
+	// landing inside its own bounds — since both are "don't let a break land
+	// between aTop and bTop" constraints and share the same boundary-pulling
+	// mechanism below. See collectNoWrapPairs().
+	const keepPairs = [...collectKeepWithNext(page), ...collectNoWrapPairs(page)];
 
 	// Fast path: all content fits within the padding-respecting boundary and
 	// there are no forced breaks that would split the page.  keepPairs cannot
@@ -585,11 +589,21 @@ function collectForcedBreaks(page: PDFNode): number[] {
 	return [...breaks].sort((a, b) => a - b);
 }
 
-/** A keep-with-next constraint: the kept node's top and its successor's top. */
+/**
+ * A "don't let a break land between aTop and bTop" constraint, consumed by
+ * findKeepWithNextBreak() below. Populated from two distinct sources:
+ *
+ *  - keep-with-next: aTop is the kept node's top, bTop is its following flow
+ *    sibling's top — keeps the pair from being separated by a break landing
+ *    between them (collectKeepWithNext()).
+ *  - wrap={false}: aTop and bTop are the same node's own top and bottom —
+ *    keeps the node itself from being sliced by a break landing inside it
+ *    (collectNoWrapPairs()).
+ */
 interface KeepPair {
-	/** Top edge (Yoga y) of the node carrying keepWithNext. */
+	/** Top edge (Yoga y) of the node carrying the constraint. */
 	aTop: number;
-	/** Top edge (Yoga y) of that node's following flow sibling. */
+	/** Bottom-of-range edge (Yoga y) the constraint must not be split from. */
 	bTop: number;
 }
 
@@ -620,6 +634,37 @@ function collectKeepWithNext(page: PDFNode): KeepPair[] {
 		}
 	}
 	walk(page);
+	return pairs;
+}
+
+/**
+ * Collects wrap={false} self-pairs from the page tree: each such node's own
+ * top and bottom, reusing the keep-with-next boundary-pulling mechanism to
+ * defer the whole node to the next page slot instead of slicing through it.
+ *
+ * A pair (aTop, bTop) is "violated" — and its break pulled up to aTop — by
+ * findKeepWithNextBreak() exactly when a boundary would land strictly inside
+ * [aTop, bTop). For a keep-with-next pair that means separating two sibling
+ * nodes; here, with aTop/bTop being one node's own top/bottom, it means the
+ * break would land inside that node — which findKeepWithNextBreak() defers by
+ * pulling the boundary up to the node's own top, moving it whole.
+ *
+ * If the node is taller than a full page, the same fallback that already
+ * applies to keep-with-next kicks in: once the node is deferred to the top of
+ * a fresh slot (aTop == yStart, no longer > yStart), the constraint stops
+ * triggering and the node is sliced normally — the only sane outcome for a
+ * box that can never fit on one page.
+ */
+function collectNoWrapPairs(page: PDFNode): KeepPair[] {
+	const pairs: KeepPair[] = [];
+	function walk(node: PDFNode): void {
+		if (node.props.fixed) return;
+		if (node.props.wrap === false && node.layout) {
+			pairs.push({ aTop: node.layout.y, bTop: node.layout.y + node.layout.height });
+		}
+		for (const child of node.children) walk(child);
+	}
+	for (const child of page.children) walk(child);
 	return pairs;
 }
 

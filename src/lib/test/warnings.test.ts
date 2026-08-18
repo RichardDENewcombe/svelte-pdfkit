@@ -17,6 +17,7 @@ import FontComponent   from '../components/Font/Font.svelte';
 import CanvasComponent from '../components/Canvas/Canvas.svelte';
 import LinkComponent   from '../components/Link/Link.svelte';
 import PageComponent   from '../components/Page/Page.svelte';
+import ViewComponent   from '../components/View/View.svelte';
 import NoPagesTemplate from './NoPagesTemplate.svelte';
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
@@ -172,6 +173,35 @@ describe('warnings – <Page>', () => {
 			expect(spy).not.toHaveBeenCalled();
 			vi.restoreAllMocks();
 		}
+	});
+});
+
+// ── View ───────────────────────────────────────────────────────────────────────
+
+describe('warnings – <View>', () => {
+	it('warns when wrap is a number below 0', () => {
+		const spy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+		renderInContext(ViewComponent, { wrap: -0.5 });
+		expect(spy).toHaveBeenCalledWith(expect.stringContaining('[svelte-pdfkit]'));
+		expect(spy).toHaveBeenCalledWith(expect.stringContaining('<View wrap={-0.5}>'));
+	});
+
+	it('warns when wrap is a number above 1', () => {
+		const spy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+		renderInContext(ViewComponent, { wrap: 1.5 });
+		expect(spy).toHaveBeenCalledWith(expect.stringContaining('[svelte-pdfkit]'));
+	});
+
+	it('does not warn for wrap as a boolean', () => {
+		const spy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+		renderInContext(ViewComponent, { wrap: false });
+		expect(spy).not.toHaveBeenCalled();
+	});
+
+	it('does not warn for wrap as an in-range fraction', () => {
+		const spy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+		renderInContext(ViewComponent, { wrap: 0.2 });
+		expect(spy).not.toHaveBeenCalled();
 	});
 });
 

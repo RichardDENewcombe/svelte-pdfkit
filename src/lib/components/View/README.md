@@ -19,7 +19,7 @@ positions its children and can carry background, border, and spacing styles.
 | Prop           | Type         | Default | Description                                            |
 | -------------- | ------------ | ------- | ------------------------------------------------------ |
 | `style`        | `StyleProps` | `{}`    | Layout and visual styles                               |
-| `wrap`         | `boolean`    | `true`  | Whether the view may be split across a page boundary. Set `false` to keep it whole — it moves entirely to the next page if it doesn't fit. |
+| `wrap`         | `boolean \| number` | `true` | Whether the view may be split across a page boundary. `false` keeps it whole — it moves entirely to the next page if it doesn't fit. A fraction `0`–`1` also moves it whole to the next page if it starts within (or extends into) that bottom fraction of the page. |
 | `fixed`        | `boolean`    | `false` | Repeat this view on every page (headers/footers)       |
 | `breakBefore`  | `boolean`    | `false` | Force a page break before this view                    |
 | `breakAfter`   | `boolean`    | `false` | Force a page break after this view                     |

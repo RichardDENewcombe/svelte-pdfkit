@@ -184,17 +184,26 @@ function paginatePage(page) {
         // at all in this slot (checked via wouldRenderInSlot(), not just its raw
         // top, since orphan control can defer it entirely even when its top
         // clears the boundary — issue #14); for wrap={false} self-pairs it means
-        // the node's own bottom doesn't clear the boundary.  We only pull the
-        // break to aTop when aTop > yStart so we still make forward progress —
-        // if the kept node is already at the top of the page and its successor
-        // still doesn't fit, the pair is taller than a page and we let it break
-        // normally.  Looping handles chains (A→B→C) and pairs newly exposed as
-        // the boundary moves up; yEnd strictly decreases each pass and is
-        // bounded below by yStart, so it always terminates.
-        let pulled = findKeepWithNextBreak(keepPairs, yStart, yEnd);
+        // the node's own bottom doesn't clear the boundary; for wrap={fraction}
+        // self-pairs (see collectWrapFractionPairs()) it means the node overlaps
+        // the bottom fraction of this slot at all, whether or not it would have
+        // been cut.  We only pull the break to aTop when aTop > yStart so we
+        // still make forward progress — if the kept node is already at the top
+        // of the page and its successor still doesn't fit, the pair is taller
+        // than a page and we let it break normally.  Looping handles chains
+        // (A→B→C) and pairs newly exposed as the boundary moves up; yEnd
+        // strictly decreases each pass and is bounded below by yStart, so it
+        // always terminates.
+        //
+        // wrap={fraction} pairs depend on this slot's own yStart/yEnd_natural
+        // (the bottom-fraction zone differs per slot), so — unlike keepPairs
+        // above, which is hoisted out of the loop — they must be recomputed
+        // fresh each iteration and merged in here.
+        const slotPairs = [...keepPairs, ...collectWrapFractionPairs(page, yStart, yEnd_natural)];
+        let pulled = findKeepWithNextBreak(slotPairs, yStart, yEnd);
         while (pulled !== null) {
             yEnd = pulled;
-            pulled = findKeepWithNextBreak(keepPairs, yStart, yEnd);
+            pulled = findKeepWithNextBreak(slotPairs, yStart, yEnd);
         }
         // On page 0, Yoga already placed content at y=padTop — no adjustment needed.
         // On overflow pages (including those after a forced break), shift content
@@ -605,6 +614,70 @@ function collectNoWrapPairs(page) {
             return;
         if (node.props.wrap === false && node.layout) {
             pairs.push({ aTop: node.layout.y, bTop: node.layout.y + node.layout.height });
+        }
+        for (const child of node.children)
+            walk(child);
+    }
+    for (const child of page.children)
+        walk(child);
+    return pairs;
+}
+/**
+ * Collects wrap={0..1} self-pairs for the current page slot: any node whose
+ * layout box overlaps the bottom `frac` fraction of this slot's *natural*
+ * span [yStart, yEndNatural) — whether it starts inside that zone, or starts
+ * above it and extends into it — is deferred whole to the next page, exactly
+ * like a wrap={false} node that would otherwise be cut by the boundary. This
+ * is a proactive version of wrap={false}: it can defer a node that would
+ * technically have fit without being cut, if it merely starts too close to
+ * the bottom margin (e.g. a heading or card landing in a cramped strip).
+ *
+ * Unlike collectKeepWithNext()/collectNoWrapPairs(), this must be recomputed
+ * per slot (not hoisted above the while loop in paginatePage()) because the
+ * zone's extent depends on this slot's own yStart/yEndNatural — page 0's span
+ * and later pages' spans differ (contentEnd vs. contentHeight, see the
+ * yEnd_natural comment above), and the zone must track whichever slot is
+ * currently being decided.
+ *
+ * The zone is measured against yEndNatural (the slot's natural boundary,
+ * before any breakBefore/breakAfter truncation), not the live/pulled `yEnd`
+ * passed into findKeepWithNextBreak() later — "bottom X% of the page" is a
+ * property of the page, not of incidental forced breaks elsewhere on it.
+ *
+ * The overlap check is toleranced by LAYOUT_EPSILON for the same reason as
+ * collectNoWrapPairs() (issue #15): without it, a node whose bottom lands a
+ * few millionths of a point into the zone due to Yoga's float32 accumulation
+ * noise would be spuriously deferred, and for a tightly-packed run that
+ * misfire cascades into one node per page.
+ *
+ * bTop is set to Infinity rather than a computed value: once a pair is
+ * included at all, its aTop is already known to be "in scope" for this slot
+ * per findKeepWithNextBreak()'s own aTop > yStart / aTop < yEnd guard, and it
+ * must then be unconditionally treated as violated — there is no finite yEnd
+ * this slot could ever produce that should un-violate it. Infinity makes the
+ * existing self-pair check `bTop - yEnd > LAYOUT_EPSILON` true for any finite
+ * yEnd, reusing that check exactly as-is; findKeepWithNextBreak() itself is
+ * not modified. The same aTop <= yStart guard that already prevents infinite
+ * deferral for wrap={false} (see collectNoWrapPairs()) applies here too: once
+ * a node is deferred to the top of a fresh slot, aTop === yStart and the
+ * constraint stops firing, so a node taller than a page — or wrap={1}, the
+ * most extreme fraction — still terminates and falls back to normal slicing.
+ */
+function collectWrapFractionPairs(page, yStart, yEndNatural) {
+    const pairs = [];
+    const slotHeight = yEndNatural - yStart;
+    function walk(node) {
+        if (node.props.fixed)
+            return;
+        const w = node.props.wrap;
+        if (typeof w === 'number' && node.layout) {
+            const frac = Math.min(1, Math.max(0, w));
+            const thresholdY = yEndNatural - slotHeight * frac;
+            const nodeTop = node.layout.y;
+            const nodeBottom = nodeTop + node.layout.height;
+            if (nodeTop < yEndNatural && nodeBottom - thresholdY > LAYOUT_EPSILON) {
+                pairs.push({ aTop: nodeTop, bTop: Infinity });
+            }
         }
         for (const child of node.children)
             walk(child);

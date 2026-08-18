@@ -314,7 +314,7 @@ A box container. The primary layout primitive — equivalent to a `<div>`.
 | Prop           | Type         | Default | Description                                            |
 | -------------- | ------------ | ------- | ------------------------------------------------------ |
 | `style`        | `StyleProps` | `{}`    | Layout and visual styles                               |
-| `wrap`         | `boolean`    | `true`  | When `false`, keep the box intact instead of splitting it across a page break |
+| `wrap`         | `boolean \| number` | `true` | `false` keeps the box intact instead of splitting it across a page break; a fraction `0`–`1` also moves it to the next page if it starts in (or extends into) the bottom fraction of the page — see [Wrap](#wrap) below |
 | `fixed`        | `boolean`    | `false` | Repeat on every page (use for headers/footers)         |
 | `breakBefore`  | `boolean`    | `false` | Force a page break before this view                    |
 | `breakAfter`   | `boolean`    | `false` | Force a page break after this view                     |
@@ -797,6 +797,23 @@ Content that overflows a `<Page>` automatically flows onto new pages — long `<
 ```
 
 If the pair is taller than a whole page the break is allowed (the constraint cannot be satisfied). Available on `<View>`, `<Text>`, and `<Image>`.
+
+### Wrap
+
+`wrap` on `<View>` controls whether a box may be split across a page boundary.
+
+```svelte
+<View wrap={false}>Never split — moves whole to the next page if it doesn't fit.</View>
+```
+
+Set `wrap` to a fraction between `0` and `1` to also move the box to the next page when it merely *starts* in (or extends into) the bottom fraction of the page — even if it would technically have fit without being cut. This is useful for avoiding a card, row, or heading that lands in a cramped strip just above the bottom margin.
+
+```svelte
+<!-- Moves to the next page if its top falls within the bottom 20% of the page -->
+<View wrap={0.2}>…</View>
+```
+
+`wrap={0}` behaves the same as `wrap={false}`. `wrap={true}` (the default) allows normal splitting. Out-of-range fractions are clamped to `0`–`1` with a dev warning. Available on `<View>` only.
 
 ### Orphans and widows
 

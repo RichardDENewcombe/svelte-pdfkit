@@ -196,4 +196,20 @@ describe('wrap={false} – edge cases', () => {
 		expect(blockNode!.props.__cutTop).toBeFalsy();
 		expect(blockNode!.props.__cutBottom).toBeFalsy();
 	});
+
+	it('coexists with a wrap={fraction} sibling without altering wrap={false} behavior', () => {
+		// See wrap-fraction.test.ts for dedicated coverage of wrap as a number
+		// 0-1. This just locks in that adding a fraction-wrap sibling to the
+		// same slot doesn't change wrap={false}'s own decision.
+		const doc = makeDoc([
+			box('filler', 0, 775),
+			box('block', 775, 100, { wrap: false }),
+			box('fracSibling', 875, 20, { wrap: 0.9 })
+		]);
+
+		const pages = paginate(doc);
+
+		expect(pageOf(pages, 'filler')).toBe(0);
+		expect(pageOf(pages, 'block')).toBe(1);
+	});
 });

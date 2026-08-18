@@ -2020,6 +2020,110 @@
 </Page>
 
 <!-- ══════════════════════════════════════════════════════════════════════ -->
+<!-- Wrap Fraction page                                                    -->
+<!--                                                                        -->
+<!-- Demonstrates wrap as a fraction (0-1) on <View> — a proactive sibling  -->
+<!-- of wrap={false}. Instead of only reacting to an actual cut, a          -->
+<!-- fractional wrap moves a box whole to the next page if it merely       -->
+<!-- starts in (or extends into) the bottom fraction of the page, even if  -->
+<!-- it would technically have fit without being cut.                      -->
+<!--                                                                        -->
+<!-- Live demo: a spacer pushes a bordered box so its top lands inside the -->
+<!-- bottom 20% of this page, while it would still comfortably fit         -->
+<!-- uncut if it were plain content — making the "would have fit, moved    -->
+<!-- anyway" behavior visually obvious.                                     -->
+<!--                                                                        -->
+<!-- The spacer height is tuned so the box starts past the bottom-20%      -->
+<!-- threshold but well short of the page's own bottom edge; adjust it if  -->
+<!-- the surrounding content above changes.                                 -->
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<Page size="A4" style={{ padding: 40 }}>
+
+	<!-- Title -->
+	<Text
+		text="Wrap Fraction"
+		bookmark="Wrap Fraction"
+		style={{ fontFamily: 'Helvetica-Bold', fontSize: 20, color: brand, marginBottom: 4 }}
+	/>
+	<Text
+		text="Move a box to the next page before it lands too close to the bottom margin."
+		style={{ fontFamily: 'Helvetica-Oblique', fontSize: 9, color: muted, marginBottom: 20 }}
+	/>
+
+	<!-- What it does -->
+	<Text
+		text="What it does"
+		style={{ fontFamily: 'Helvetica-Bold', fontSize: 11, color: brand, marginBottom: 6 }}
+	/>
+	<Text
+		text="wrap={false} only prevents a box from being cut mid-content. A fraction between 0 and 1 goes further: if the box's top falls in (or it extends into) the bottom fraction of the page, it moves whole to the next page — even when it would technically have fit without being cut. Useful for keeping a heading or card out of a cramped strip just above the page margin."
+		style={{ fontFamily: 'Helvetica', fontSize: 10, marginBottom: 16 }}
+	/>
+
+	<!-- Prop reference -->
+	<View style={{ backgroundColor: subtle, padding: 12, borderRadius: 4, marginBottom: 16 }}>
+		<Text
+			text={'<View wrap={0.2} style={{ borderWidth: 1 }}>…moves if it starts in the bottom 20%…</View>'}
+			style={{ fontFamily: 'Courier', fontSize: 9, color: brand, marginBottom: 8 }}
+		/>
+		<Text
+			text="wrap={0} behaves like wrap={false}. Out-of-range fractions are clamped to 0-1. If the box is taller than a whole page, the constraint cannot be satisfied and it splits normally once moved to a fresh page."
+			style={{ fontFamily: 'Helvetica-Oblique', fontSize: 8, color: muted }}
+		/>
+	</View>
+
+	<!-- Live demo intro -->
+	<Text
+		text="Live demo — box moved whole despite fitting uncut"
+		style={{ fontFamily: 'Helvetica-Bold', fontSize: 11, color: brand, marginBottom: 4 }}
+	/>
+	<Text
+		text="The spacer below pushes the bordered box so its top lands within the bottom 20% of this page. There is still enough room left on the page for the box's content — a wrap={false} box in the same spot would stay put — but because this box carries wrap={0.2}, the paginator moves it whole to the next page anyway."
+		style={{ fontFamily: 'Helvetica-Oblique', fontSize: 9, color: muted, marginBottom: 8 }}
+	/>
+
+	<!--
+		Spacer: pushes the bordered box down so its top lands inside the bottom
+		20% zone of this page (verified working range against the content
+		above) while still leaving enough room that it would fit if it weren't
+		deferred.  Tuned against the content above; adjust if that content
+		changes (raise to push lower, lower to pull up).
+	-->
+	<View style={{ height: 388 }} />
+
+	<!-- Bordered box marked wrap={0.2} — moves whole once it starts in the bottom 20%. -->
+	<View
+		wrap={0.2}
+		style={{ borderWidth: 1, borderColor: '#86efac', borderRadius: 4, padding: 10 }}
+	>
+		<Text
+			text="Section 4: Wrap Fraction  (wrap={0.2})"
+			style={{ fontFamily: 'Helvetica-Bold', fontSize: 13, color: '#16a34a', marginBottom: 6 }}
+		/>
+		<Text
+			text="This box carries wrap={0.2}. It would have fit beneath the spacer above without being cut — but because its top landed within the bottom 20% of the page, the paginator moved it whole onto this fresh page anyway."
+			style={{ fontFamily: 'Helvetica', fontSize: 10, lineHeight: 1.35 }}
+		/>
+	</View>
+
+	<!-- Fixed footer -->
+	<View
+		fixed={true}
+		style={{ position: 'absolute', bottom: 20, left: 40, right: 40, flexDirection: 'row', justifyContent: 'space-between' }}
+	>
+		<Text
+			text="Acme Corp · Confidential"
+			style={{ fontFamily: 'Helvetica-Oblique', fontSize: 8, color: muted }}
+		/>
+		<Text
+			render={pageFooter}
+			style={{ fontFamily: 'Helvetica', fontSize: 8, color: muted }}
+		/>
+	</View>
+
+</Page>
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
 <!-- SVG Text page                                                          -->
 <!-- ══════════════════════════════════════════════════════════════════════ -->
 <Page size="A4" style={{ padding: 40 }}>

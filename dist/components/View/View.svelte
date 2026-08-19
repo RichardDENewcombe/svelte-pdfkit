@@ -12,6 +12,7 @@
 		breakAfter = false,
 		keepWithNext = false,
 		bookmark,
+		anchor,
 		children
 	}: {
 		style?: StyleProps;
@@ -31,6 +32,8 @@
 		keepWithNext?: boolean;
 		/** Adds a navigable document-outline entry (bookmark) pointing to this view's page. */
 		bookmark?: string;
+		/** Registers this node's resolved page number under `key`, retrievable via `pageOf(key)` in a Text `render` prop. */
+		anchor?: string;
 		children?: Snippet;
 	} = $props();
 
@@ -41,7 +44,7 @@
 	}
 
 	const parent = getContext<PDFNode>('__pdf__');
-	const node: PDFNode = { type: 'view', props: { style, wrap, fixed, breakBefore, breakAfter, keepWithNext, bookmark }, children: [] };
+	const node: PDFNode = { type: 'view', props: { style, wrap, fixed, breakBefore, breakAfter, keepWithNext, bookmark, anchor }, children: [] };
 	parent.children.push(node);
 	setContext('__pdf__', node);
 </script>

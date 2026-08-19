@@ -12,7 +12,8 @@
 		breakBefore = false,
 		breakAfter = false,
 		keepWithNext = false,
-		bookmark
+		bookmark,
+		anchor
 	}: {
 		/** Explicit text string. Use either this, children, or render — not multiple. */
 		text?: string;
@@ -34,6 +35,8 @@
 		keepWithNext?: boolean;
 		/** Adds a navigable document-outline entry (bookmark) pointing to this text's page. */
 		bookmark?: string;
+		/** Registers this node's resolved page number under `key`, retrievable via `pageOf(key)` in a Text `render` prop. */
+		anchor?: string;
 	} = $props();
 
 	const parent = getContext<PDFNode>('__pdf__');
@@ -47,7 +50,7 @@
 		// Render-prop text: no static text at build time.
 		// The actual string is produced at draw time by drawText().
 		// Yoga measures with placeholder values (0, 0) to estimate space.
-		parent.children.push({ type: 'text', props: { render: renderFn, style, breakBefore, breakAfter, keepWithNext, bookmark }, children: [] });
+		parent.children.push({ type: 'text', props: { render: renderFn, style, breakBefore, breakAfter, keepWithNext, bookmark, anchor }, children: [] });
 	} else {
 		let resolvedText = textProp != null ? String(textProp) : '';
 
@@ -71,6 +74,6 @@
 				.trim();
 		}
 
-		parent.children.push({ type: 'text', props: { text: resolvedText, style, breakBefore, breakAfter, keepWithNext, bookmark }, children: [] });
+		parent.children.push({ type: 'text', props: { text: resolvedText, style, breakBefore, breakAfter, keepWithNext, bookmark, anchor }, children: [] });
 	}
 </script>

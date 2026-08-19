@@ -7,7 +7,8 @@ export function drawText(
 	doc: any,
 	node: PDFNode,
 	pageNumber = 1,
-	totalPages = 1
+	totalPages = 1,
+	pageOf: (anchorKey: string) => number | undefined = () => undefined
 ): void {
 	const { style = {} } = node.props;
 	const { x = 0, y = 0, width = 0 } = node.layout ?? {};
@@ -15,7 +16,7 @@ export function drawText(
 	// Resolve the text string — either static or from a render-prop function.
 	const text =
 		typeof node.props.render === 'function'
-			? node.props.render({ pageNumber, totalPages })
+			? node.props.render({ pageNumber, totalPages, pageOf })
 			: (node.props.text ?? '');
 
 	if (!text) return;

@@ -133,6 +133,34 @@
 	No manual paddingBottom needed: the paginator automatically detects the fixed
 	footer below and adds 15pt clearance above it, keeping flow content clear.
 -->
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<!-- Table of Contents — demonstrates the anchor prop / pageOf lookup.      -->
+<!--                                                                        -->
+<!-- Each entry below is a Text render prop that calls pageOf(key) for an   -->
+<!-- anchor defined much later in the document (Invoice, SVG Feature       -->
+<!-- Gallery, Explicit Page Breaks). pageOf resolves those page numbers     -->
+<!-- before this page is drawn — pagination already knows every page's     -->
+<!-- content by the time drawing starts.                                   -->
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<Page size="A4" style={{ padding: 40 }}>
+	<Text
+		text="Table of Contents"
+		style={{ fontFamily: 'Helvetica-Bold', fontSize: 20, color: brand, marginBottom: 20 }}
+	/>
+	<Text
+		render={({ pageOf }) => `Invoice ...................................... ${pageOf('invoice') ?? ''}`}
+		style={{ fontSize: 12, marginBottom: 8 }}
+	/>
+	<Text
+		render={({ pageOf }) => `SVG Feature Gallery ........................... ${pageOf('svg-gallery') ?? ''}`}
+		style={{ fontSize: 12, marginBottom: 8 }}
+	/>
+	<Text
+		render={({ pageOf }) => `Explicit Page Breaks .......................... ${pageOf('explicit-breaks') ?? ''}`}
+		style={{ fontSize: 12, marginBottom: 8 }}
+	/>
+</Page>
+
 <Page size="A4" style={{ padding: 40 }}>
 
 	<!-- ── Header ─────────────────────────────────────────────────────────── -->
@@ -151,6 +179,7 @@
 			<Text
 				text="INVOICE"
 				bookmark="Invoice"
+				anchor="invoice"
 				style={{ fontFamily: 'Helvetica-Bold', fontSize: 28, color: brand }}
 			/>
 			<Text
@@ -798,6 +827,7 @@
 	<Text
 		text="SVG Feature Gallery"
 		bookmark="SVG Feature Gallery"
+		anchor="svg-gallery"
 		style={{ fontFamily: 'Helvetica-Bold', fontSize: 20, color: brand, marginBottom: 4 }}
 	/>
 	<Text
@@ -1247,6 +1277,7 @@
 	<Text
 		text="Explicit Page Breaks"
 		bookmark="Explicit Page Breaks"
+		anchor="explicit-breaks"
 		style={{ fontFamily: 'Helvetica-Bold', fontSize: 20, color: brand, marginBottom: 4 }}
 	/>
 	<Text

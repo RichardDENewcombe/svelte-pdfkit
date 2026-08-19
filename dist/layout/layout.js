@@ -199,7 +199,7 @@ function applyStyle(yogaNode, node) {
         // string won't be known until draw time. The user should design their
         // page-number text to be representative of the longest expected output.
         const textForMeasure = typeof node.props.render === 'function'
-            ? node.props.render({ pageNumber: 0, totalPages: 0 })
+            ? node.props.render({ pageNumber: 0, totalPages: 0, pageOf: () => undefined })
             : (node.props.text ?? '');
         yogaNode.setMeasureFunc((width) => measureText(textForMeasure, node.props.style ?? {}, width));
     }

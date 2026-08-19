@@ -18,6 +18,8 @@ type $$ComponentProps = {
     keepWithNext?: boolean;
     /** Adds a navigable document-outline entry (bookmark) pointing to this view's page. */
     bookmark?: string;
+    /** Registers this node's resolved page number under `key`, retrievable via `pageOf(key)` in a Text `render` prop. */
+    anchor?: string;
     children?: Snippet;
 };
 declare const View: import("svelte").Component<$$ComponentProps, {}, "">;

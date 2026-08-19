@@ -2,6 +2,8 @@
 export interface PageRenderProps {
   pageNumber: number;
   totalPages: number;
+  /** Looks up the page number a node with the given `anchor` key resolved to. */
+  pageOf: (anchorKey: string) => number | undefined;
 }
 
 /** A function that returns a string given the current page context. */

@@ -7,6 +7,8 @@ type $$ComponentProps = {
     style?: StyleProps;
     /** Adds a navigable document-outline entry (bookmark) pointing to this link's page. */
     bookmark?: string;
+    /** Registers this node's resolved page number under `key`, retrievable via `pageOf(key)` in a Text `render` prop. */
+    anchor?: string;
     children?: Snippet;
 };
 declare const Link: import("svelte").Component<$$ComponentProps, {}, "">;

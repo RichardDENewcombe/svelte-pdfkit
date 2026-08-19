@@ -1,12 +1,12 @@
 import { resolveFontStack } from '../runtime/font-registry.js';
 import { wrapLinesMeta, WRAP_TOLERANCE } from '../layout/text-measure.js';
 import { splitFontRuns, widthOfRuns } from '../layout/font-runs.js';
-export function drawText(doc, node, pageNumber = 1, totalPages = 1) {
+export function drawText(doc, node, pageNumber = 1, totalPages = 1, pageOf = () => undefined) {
     const { style = {} } = node.props;
     const { x = 0, y = 0, width = 0 } = node.layout ?? {};
     // Resolve the text string — either static or from a render-prop function.
     const text = typeof node.props.render === 'function'
-        ? node.props.render({ pageNumber, totalPages })
+        ? node.props.render({ pageNumber, totalPages, pageOf })
         : (node.props.text ?? '');
     if (!text)
         return;

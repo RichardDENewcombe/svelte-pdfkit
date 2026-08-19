@@ -24,6 +24,7 @@
 		href,
 		style = {},
 		bookmark,
+		anchor,
 		children
 	}: {
 		/** The URL the link points to. */
@@ -32,6 +33,8 @@
 		style?: StyleProps;
 		/** Adds a navigable document-outline entry (bookmark) pointing to this link's page. */
 		bookmark?: string;
+		/** Registers this node's resolved page number under `key`, retrievable via `pageOf(key)` in a Text `render` prop. */
+		anchor?: string;
 		children?: Snippet;
 	} = $props();
 
@@ -39,7 +42,7 @@
 
 	if (!href) warn('<Link> is missing a required `href` prop — the link will not be clickable.');
 
-	const node: PDFNode = { type: 'link', props: { href, style, bookmark }, children: [] };
+	const node: PDFNode = { type: 'link', props: { href, style, bookmark, anchor }, children: [] };
 	parent.children.push(node);
 
 	// Set context so child components (Text, View, Image) append themselves

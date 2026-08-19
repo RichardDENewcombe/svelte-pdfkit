@@ -9,7 +9,8 @@
 		breakBefore = false,
 		breakAfter = false,
 		keepWithNext = false,
-		bookmark
+		bookmark,
+		anchor
 	}: {
 		src: string;
 		style?: StyleProps;
@@ -19,6 +20,8 @@
 		keepWithNext?: boolean;
 		/** Adds a navigable document-outline entry (bookmark) pointing to this image's page. */
 		bookmark?: string;
+		/** Registers this node's resolved page number under `key`, retrievable via `pageOf(key)` in a Text `render` prop. */
+		anchor?: string;
 	} = $props();
 
 	const parent = getContext<PDFNode>('__pdf__');
@@ -26,6 +29,6 @@
 
 	if (!src) warn('<Image> is missing a required `src` prop — no image will be rendered.');
 
-	parent.children.push({ type: 'image', props: { src, style, breakBefore, breakAfter, keepWithNext, bookmark }, children: [] });
+	parent.children.push({ type: 'image', props: { src, style, breakBefore, breakAfter, keepWithNext, bookmark, anchor }, children: [] });
 	root.resources.push({ type: 'image', src });
 </script>

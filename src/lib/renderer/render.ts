@@ -116,7 +116,13 @@ function strokeCutBorderPath(
 		.lineTo(x + w, y);
 }
 
-function drawNodes(doc: any, nodes: PDFNode[], pageNumber = 1, totalPages = 1): void {
+function drawNodes(
+	doc: any,
+	nodes: PDFNode[],
+	pageNumber = 1,
+	totalPages = 1,
+	pageOf: (anchorKey: string) => number | undefined = () => undefined
+): void {
 	for (const node of nodes) {
 		// Apply any transform (rotate/scale/translate/skew) around the node's own
 		// draw and its child subtree, matching CSS. Transforms don't affect layout,
@@ -197,7 +203,7 @@ function drawNodes(doc: any, nodes: PDFNode[], pageNumber = 1, totalPages = 1): 
 				break;
 			}
 			case 'text':
-				drawText(doc, node, pageNumber, totalPages);
+				drawText(doc, node, pageNumber, totalPages, pageOf);
 				break;
 			case 'image':
 				drawImage(doc, node);
@@ -221,7 +227,7 @@ function drawNodes(doc: any, nodes: PDFNode[], pageNumber = 1, totalPages = 1): 
 				break;
 		}
 		if (!skipChildren && node.children.length > 0) {
-			drawNodes(doc, node.children, pageNumber, totalPages);
+			drawNodes(doc, node.children, pageNumber, totalPages, pageOf);
 		}
 
 		if (transformed) {
@@ -238,12 +244,17 @@ function drawNodes(doc: any, nodes: PDFNode[], pageNumber = 1, totalPages = 1): 
  *                    Used to register custom fonts on the PDFKit document
  *                    before drawing begins. If omitted, only built-in PDFKit
  *                    fonts (Helvetica, Courier, Times) are available.
+ * @param pageOf    - Looks up the page number a node with the given `anchor`
+ *                    key resolved to, for the Text `render` prop. Built from
+ *                    the full pages[] array before drawing starts, so it can
+ *                    resolve pages that haven't been drawn yet.
  * @returns A Node.js Readable stream (PDFDocument extends stream.PassThrough).
  */
 export function renderPDF(
 	pages: PDFNode[],
 	resources: ResourceEntry[] = [],
-	metadata: PDFMetadata = {}
+	metadata: PDFMetadata = {},
+	pageOf: (anchorKey: string) => number | undefined = () => undefined
 ): any {
 	const PDFDocument = _require('pdfkit');
 
@@ -288,7 +299,7 @@ export function renderPDF(
 		const width = page.props.width ?? 595;
 		const height = page.props.height ?? 842;
 		doc.addPage({ size: [width, height], margin: 0 });
-		drawNodes(doc, page.children, i + 1, totalPages);
+		drawNodes(doc, page.children, i + 1, totalPages, pageOf);
 		// Emit outline entries while this page is the current PDFKit page:
 		// addItem's destination is always doc.page ('Fit'), so items land on
 		// the page just added and drawn.
